@@ -27,6 +27,18 @@ for ss = 1:NSubjects
     CRF_Mel(:, ss) = csvread(fullfile(localDropboxDir, MelData{ss}));
 end
 
+
+RGBColsLMS = [252, 187, 161 ; ...
+    252, 146, 114 ; ...
+    251, 106, 74 ; ...
+    222, 45, 38; ...
+    165, 15, 21];
+RGBColsMel = [198 219 239 ; ...
+    158 202 225 ; ...
+    107 174 214; ...
+    49 130 189 ; ...
+    8 81 156];
+
 crfFig = figure;
 hold on;
 CRF_LMS_mean = mean(CRF_LMS, 2);
@@ -35,7 +47,7 @@ CRF_Mel_mean = mean(CRF_Mel, 2);
 errorbar(log10(theContrastsScaled*100), -CRF_LMS_mean, std(CRF_LMS, [], 2)/sqrt(NSubjects), '-k');
 errorbar(log10(theContrastsScaled*100), -CRF_Mel_mean, std(CRF_Mel, [], 2)/sqrt(NSubjects), '-k');
 for ii = 1:NContrastLevels
-    plot(log10(theContrastsScaled(ii)*100), -CRF_LMS_mean(ii), 's', 'LineStyle', 'none', 'Color', 'k', 'MarkerFaceColor', RGBCols(ii, :)/255);
+    plot(log10(theContrastsScaled(ii)*100), -CRF_LMS_mean(ii), 's', 'LineStyle', 'none', 'Color', 'k', 'MarkerFaceColor', RGBColsLMS(ii, :)/255);
     plot(log10(theContrastsScaled(ii)*100), -CRF_Mel_mean(ii), 's', 'LineStyle', 'none', 'Color', 'k', 'MarkerFaceColor', RGBColsMel(ii, :)/255);
 end
 
