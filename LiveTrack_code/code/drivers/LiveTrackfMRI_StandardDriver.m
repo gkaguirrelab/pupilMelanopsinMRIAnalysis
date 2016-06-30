@@ -1,7 +1,7 @@
 function params = LiveTrackfMRI_StandardDriver(expt)
 % params = LiveTrackfMRI_StandardDriver(expt)
 %
-% This function is is our standard drive to do pupil tracking during fMRI
+% This function is our standard drive to do pupil tracking during fMRI
 % scans using a CRS LiveTrackAV unit. It will record an AVI video (10 fps)
 % and produce a MAT report with tracking values of the pupil. The report
 % collection is initialized by the user. The video recording is triggered
