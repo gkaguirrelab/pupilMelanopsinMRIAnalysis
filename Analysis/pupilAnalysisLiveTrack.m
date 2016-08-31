@@ -364,7 +364,7 @@ for sn = 1:NSubjects
     
     
     csvwrite(fullfile(outPath, [subjectID '-' protocol  '_CRF.csv']), Data_Per_ContrastLevel_xrun_MeanMin');
-    csvwrite(fullfile(outPath, [subjectID '-' protocol  '_MeanTimeSeries.csv']), [timeVector' Data_Per_ContrastLevel_xrun_Mean{:}]);
+    dlmwrite(fullfile(outPath, [subjectID '-' protocol  '_MeanTimeSeries.csv']), [timeVector' Data_Per_ContrastLevel_xrun_Mean{:} Data_Per_ContrastLevel_xrun_SEM{:}], 'delimiter',',','precision',8);
     close(crfFig);
     close(timeSeriesFig);
     
