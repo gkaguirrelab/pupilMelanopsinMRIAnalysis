@@ -22,7 +22,7 @@ end
 % Path to local Dropbox
 localDropboxDir = fullfile('/Users', strtrim(user_name), '/Dropbox (Aguirre-Brainard Lab)');
 
-for sn = 1:NSubjects
+for sn = 5
     subjectID = subjectIDs{sn};
     protocol = protocols{sn};
     
