@@ -39,3 +39,5 @@ setpref('OneLight', 'dropboxPath', dropboxBaseDir);
 
 % Set the data path
 setpref('OneLight', 'dataPath', dataPath);
+
+addpath(genpath(['/Users/' userID '/Documents/MATLAB/Analysis/MelanopsinMR_EyeTracking']));
