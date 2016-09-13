@@ -4,7 +4,7 @@ function MelanopsinMR_PupilAnalysisLocalHookTemplate
 % For use with the ToolboxToolbox.  If you copy this into your
 % ToolboxToolbox localToolboxHooks directory (by defalut,
 % ~/localToolboxHooks) and delete "LocalHooksTemplate" from the filename,
-% this will get run when you execute tbUse({'IBIOColorDetect'}) to set up for
+% this will get run when you execute tbUse({'MelanopsinMR_PupilAnalysisConfig'}) to set up for
 % this project.  You then edit your local copy to match your local machine.
 %
 % The thing that this does is add subfolders of the project to the path as
