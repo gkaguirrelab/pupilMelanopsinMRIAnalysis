@@ -21,5 +21,5 @@ config = [ ...
     'url', 'https://github.com/gkaguirrelab/mriTemporalFitting.git')];
 
 %% Write the config to a JSON file.
-configPath = 'MelanopsinMR_EyeTrackingConfig.json';
+configPath = 'MelanopsinMR_PupilAnalysisConfig.json';
 tbWriteConfig(config, 'configPath', configPath);

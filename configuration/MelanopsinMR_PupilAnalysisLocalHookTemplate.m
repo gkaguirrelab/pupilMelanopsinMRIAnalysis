@@ -1,4 +1,4 @@
-function MelanopsinMR_EyeTrackingLocalHookTemplate
+function MelanopsinMR_PupilAnalysisLocalHookTemplate
 % MelanopsinMR_EyeTracking
 %
 % For use with the ToolboxToolbox.  If you copy this into your
@@ -40,4 +40,4 @@ setpref('OneLight', 'dropboxPath', dropboxBaseDir);
 % Set the data path
 setpref('OneLight', 'dataPath', dataPath);
 
-addpath(genpath(['/Users/' userID '/Documents/MATLAB/Analysis/MelanopsinMR_EyeTracking']));
+addpath(genpath(['/Users/' userID '/Documents/MATLAB/Analysis/MelanopsinMR_PupilAnalysis']));
