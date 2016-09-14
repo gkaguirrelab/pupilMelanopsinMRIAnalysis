@@ -61,7 +61,7 @@ for ss = 1:length(sessDirs)
     % Make the packets
     params.packetType       = 'pupil';
     params.sessionDir       = fullfile(dropboxDir, sessDirs{ss});
-    NRuns = length(listdir(fullfile(params.sessionDir, 'MatFiles'), 'files'));
+    NRuns = length(listdir(fullfile(params.sessionDir, 'MatFiles', '*.mat'), 'files'));
     
     % Iterate over runs
     for ii = 1:NRuns;
