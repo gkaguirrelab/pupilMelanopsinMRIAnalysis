@@ -46,13 +46,16 @@ for ss = 1:length(sessDirs)
     params.sessionObserver = tmp{2};
     params.sessionDate = tmp{3};    
     
+    % Display some useful information
+    fprintf('>> Processing <strong>%s</strong> | <strong>%s</strong> | <strong>%s</strong>\n', params.sessionType, params.sessionObserver, params.sessionDate);
+    
+    % Determine some parameters
     switch params.sessionDate
         case {'053116' '060116' '060216'}
             params.acquisitionFreq      = 30;
         otherwise
             params.acquisitionFreq      = 60;
     end
-    
     params.LiveTrackSamplingRate        = 60; % Hz
     params.ResamplingFineFreq           = 1000; % 1 msec
     params.BlinkWindowSample            = -50:50; % Samples surrounding the blink event
@@ -65,16 +68,17 @@ for ss = 1:length(sessDirs)
     
     % Iterate over runs
     for ii = 1:NRuns;
+        fprintf('\t* Run <strong>%g</strong> / <strong>%g</strong>\n', ii, NRuns);
         % Set up some parameters
         params.runNum           = ii;
         params.stimulusFile     = fullfile(params.sessionDir, 'MatFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']);
         params.responseFile     = fullfile(params.sessionDir, 'EyeTrackingFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']);  
         [params.timeSeries params.respTimeBase] = loadPupilDataForPackets(params);
-        packets{ii} = makePacket(params);
+        packets{ss, ii} = makePacket(params);
      
         % Find the stimulus onsets so that we can align the data to it. We
         % do that by finding a [0 1] edge from a difference operator.
-        tmp = sum(packets{ii}.stimulus.values);
+        tmp = sum(packets{ss, ii}.stimulus.values);
         tmp2 = diff(tmp);
         tmp2(tmp2 < 0) = 0;
         tmp2(tmp2 > 0) = 1;
@@ -84,10 +88,10 @@ for ss = 1:length(sessDirs)
         NSegments = length(stimOnsets);
         t = (0:extractionDurInd)/1000;
         for jj = 1:length(stimOnsets)
-            if (stimOnsets(jj)+extractionDurInd) <= length(packets{ii}.response.values)
-                Data_Per_Segment(:, jj) = (packets{ii}.response.values(stimOnsets(jj):(stimOnsets(jj)+extractionDurInd)));
+            if (stimOnsets(jj)+extractionDurInd) <= length(packets{ss, ii}.response.values)
+                Data_Per_Segment(:, jj) = (packets{ss, ii}.response.values(stimOnsets(jj):(stimOnsets(jj)+extractionDurInd)));
             else
-                Data_Per_Segment(:, jj) = (packets{ii}.response.values(stimOnsets(jj):end));
+                Data_Per_Segment(:, jj) = (packets{ss, ii}.response.values(stimOnsets(jj):end));
             end
         end
         
@@ -98,7 +102,7 @@ for ss = 1:length(sessDirs)
         allDataTmp = [allDataTmp Data_Per_Segment];
         
         % Extract information about the stimulus label
-        [uniqueCombos{ii}, ~, idx] = unique([packets{ii}.stimulus.metaData.params.theDirections' packets{ii}.stimulus.metaData.params.theContrastRelMaxIndices'], 'rows');
+        [uniqueCombos{ii}, ~, idx] = unique([packets{ss, ii}.stimulus.metaData.params.theDirections' packets{ss, ii}.stimulus.metaData.params.theContrastRelMaxIndices'], 'rows');
         allIndicesTmp = [allIndicesTmp idx];
     end
     
@@ -115,7 +119,11 @@ for ss = 1:length(sessDirs)
     % Save out the data from this loop.
     allData{ss} = allDataTmp;
     allIndices{ss} = allIndicesTmp;
+    fprintf('\n');
 end
+
+%% Fit model to the packets
+% Insert code here
 
 %% Merge the sessions
 NSessionsTotal = length(whichSessionsToMerge);
