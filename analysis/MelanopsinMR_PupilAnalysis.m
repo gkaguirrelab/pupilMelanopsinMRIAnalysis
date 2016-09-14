@@ -73,7 +73,8 @@ for ss = 1:length(sessDirs)
         params.runNum           = ii;
         params.stimulusFile     = fullfile(params.sessionDir, 'MatFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']);
         params.responseFile     = fullfile(params.sessionDir, 'EyeTrackingFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']);  
-        [params.timeSeries params.respTimeBase] = loadPupilDataForPackets(params);
+        [params.respValues params.respTimeBase] = loadPupilDataForPackets(params);
+        [params.stimValues params.stimTimeBase params.stimMetaData] = makeStimStruct(params);
         packets{ss, ii} = makePacket(params);
      
         % Find the stimulus onsets so that we can align the data to it. We
