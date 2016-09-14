@@ -1,4 +1,4 @@
-% MelanopsinMR_PupilAnalysis.m
+%% MelanopsinMR_PupilAnalysis.m
 %
 % Program to run data analysis on pupil data collected within the
 % `MelanopsinMR` project.
@@ -92,12 +92,14 @@ end
 %% Merge the sessions
 NSessionsTotal = length(whichSessionsToMerge);
 for mm = 1:NSessionsTotal
+    thisIdx = whichSessionsToMerge{mm};
     % Merge data
-    allData{whichSessionsToMerge(mm)}
+    allDataMerged{mm} = [allData{thisIdx}];
+    allIndicesMerged{mm} = [allIndices{thisIdx}];
     
     % Extract a label for the session
-    strtmp = strsplit(sessDirs{whichSessionsToMerge(mm)}, '/');
-    sessionLabels{mm{ = [strtmp{1} '_' strtmp{2}];
+    strtmp = strsplit(sessDirs{thisIdx(1)}, '/');
+    sessionLabels{mm} = [strtmp{1} '_' strtmp{2}];
 end
 
 %% Plot the data
@@ -122,10 +124,10 @@ for mm = 1:NSessionsTotal
             title('Attention task');
         end
     end
-    adjustPlot(plotFig)
-    fileName = strrep(sessDirs{ss}, '/', '_');
+    adjustPlot(plotFig);
     
+    % Save the plot
     set(plotFig, 'PaperPosition', [0 0 13 3]);
     set(plotFig, 'PaperSize', [13 3]);
-    saveas(plotFig, ['~/Desktop/' fileName '.png'], 'png');
+    saveas(plotFig, ['~/Desktop/' sessionLabels{mm} '.png'], 'png');
 end
