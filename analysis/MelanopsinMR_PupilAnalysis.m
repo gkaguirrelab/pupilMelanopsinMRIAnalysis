@@ -10,6 +10,7 @@ clearvars; close all;
 [~, userName] = system('whoami');
 userName = strtrim(userName);
 dropboxDir = fullfile('/Users', userName, '/Dropbox (Aguirre-Brainard Lab)/MELA_data');
+saveDir = fullfile('/Users', userName, '/Dropbox (Aguirre-Brainard Lab)/MELA_analysis');
 
 % Define the session directories
 sessDirs = {'MelanopsinMRMaxLMSCRF/HERO_asb1/060816'...
@@ -100,6 +101,8 @@ for mm = 1:NSessionsTotal
     % Extract a label for the session
     strtmp = strsplit(sessDirs{thisIdx(1)}, '/');
     sessionLabels{mm} = [strtmp{1} '_' strtmp{2}];
+    sessionType{mm} = strtmp{1};
+    observerID{mm} = strtmp{2};
 end
 
 %% Plot the data
@@ -126,8 +129,12 @@ for mm = 1:NSessionsTotal
     end
     adjustPlot(plotFig);
     
-    % Save the plot
+    % Save the plot. If the saving directory doesn't exist, create it.
+    if ~exist(fullfile(saveDir, sessionType{mm}, observerID{mm}), 'dir')
+       mkdir(fullfile(saveDir, sessionType{mm}, observerID{mm})); 
+    end
     set(plotFig, 'PaperPosition', [0 0 13 3]);
     set(plotFig, 'PaperSize', [13 3]);
-    saveas(plotFig, ['~/Desktop/' sessionLabels{mm} '.png'], 'png');
+    saveas(plotFig, fullfile(saveDir, sessionType{mm}, observerID{mm}, [sessionLabels{mm} '.png']), 'png');
+    close(plotFig);
 end
