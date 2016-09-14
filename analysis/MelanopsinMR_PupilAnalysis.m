@@ -41,7 +41,7 @@ for ss = 1:length(sessDirs)
     allIndicesTmp = [];
     
     % Extract some information about this session
-    tmp = strsplit(sessDirs{ss}, '/')
+    tmp = strsplit(sessDirs{ss}, '/');
     params.sessionType = tmp{1};
     params.sessionObserver = tmp{2};
     params.sessionDate = tmp{3};    
