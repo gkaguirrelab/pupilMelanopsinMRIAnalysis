@@ -123,7 +123,10 @@ for ss = 1:length(sessDirs)
 end
 
 %% Fit model to the packets
-% Insert code here
+% Insert code here. All packets from this analysis are now in packets{ss, ii}, 
+% i.e. each session and run is one entry in that cell array. At this level,
+% each packet is the entire time series, but we could plausibly also set it
+% up differently.
 
 %% Merge the sessions
 NSessionsTotal = length(whichSessionsToMerge);
