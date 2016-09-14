@@ -40,12 +40,38 @@ for ss = 1:length(sessDirs)
     allDataTmp = [];
     allIndicesTmp = [];
     
+    % Extract some information about this session
+    tmp = strsplit(sessDirs{ss}, '/')
+    params.sessionType = tmp{1};
+    params.sessionObserver = tmp{2};
+    params.sessionDate = tmp{3};    
+    
+    switch params.sessionDate
+        case {'053116' '060116' '060216'}
+            params.acquisitionFreq      = 30;
+        otherwise
+            params.acquisitionFreq      = 60;
+    end
+    
+    params.LiveTrackSamplingRate        = 60; % Hz
+    params.ResamplingFineFreq           = 1000; % 1 msec
+    params.BlinkWindowSample            = -50:50; % Samples surrounding the blink event
+    params.TRDurSecs                    = 0.8;
+
     % Make the packets
-    packets = makePackets(fullfile(dropboxDir, sessDirs{ss}), 'pupil', 'pupil', [], false);
-    NRuns = length(packets);
+    params.packetType       = 'pupil';
+    params.sessionDir       = fullfile(dropboxDir, sessDirs{ss});
+    NRuns = length(listdir(fullfile(params.sessionDir, 'MatFiles'), 'files'));
     
     % Iterate over runs
     for ii = 1:NRuns;
+        % Set up some parameters
+        params.runNum           = ii;
+        params.stimulusFile     = fullfile(params.sessionDir, 'MatFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']);
+        params.responseFile     = fullfile(params.sessionDir, 'EyeTrackingFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']);  
+        [params.timeSeries params.respTimeBase] = loadPupilDataForPackets(params);
+        packets{ii} = makePacket(params);
+     
         % Find the stimulus onsets so that we can align the data to it. We
         % do that by finding a [0 1] edge from a difference operator.
         tmp = sum(packets{ii}.stimulus.values);
@@ -75,6 +101,7 @@ for ss = 1:length(sessDirs)
         [uniqueCombos{ii}, ~, idx] = unique([packets{ii}.stimulus.metaData.params.theDirections' packets{ii}.stimulus.metaData.params.theContrastRelMaxIndices'], 'rows');
         allIndicesTmp = [allIndicesTmp idx];
     end
+    
     % Make sure sure that in every run we have the same conditions
     for ii = 1:NRuns
         logTest(ii) = all(all(uniqueCombos{ii} == uniqueCombos{1}));
