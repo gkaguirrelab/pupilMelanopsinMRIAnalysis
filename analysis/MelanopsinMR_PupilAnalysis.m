@@ -4,7 +4,7 @@
 % `MelanopsinMR` project.
 
 % Housekeeping
-clearvars; close all;
+clearvars; close all; clc;
 
 % Discover user name and set Dropbox path
 [~, userName] = system('whoami');
@@ -101,7 +101,6 @@ for ss = 1:NSessionsMerged
     
     NRunsTotal = length(mergedPackets{ss});
     for ii = 1:NRunsTotal
-        
         % Find the stimulus onsets so that we can align the data to it. We
         % do that by finding a [0 1] edge from a difference operator.
         tmp = sum(mergedPackets{ss}{ii}.stimulus.values);
@@ -126,12 +125,15 @@ for ss = 1:NSessionsMerged
             % Normalize the pupil data
             thisPacket.respValues = (thisPacket.respValues - nanmean(thisPacket.respValues(1:normalizationDurInd)))./nanmean(thisPacket.respValues(1:normalizationDurInd));
             thisPacket.respTimeBase = mergedPackets{ss}{ii}.response.timebase(idxToExtract);
+            thisPacket.respTimeBase = thisPacket.respTimeBase-thisPacket.respTimeBase(1);
             thisPacket.stimValues = mergedPackets{ss}{ii}.stimulus.values(jj, idxToExtract);
             thisPacket.stimTimeBase = mergedPackets{ss}{ii}.stimulus.timebase(idxToExtract);
-            thisPacket.stimMetaData.stimTypes = params.stimMetaData.stimTypes(jj);
+             thisPacket.stimTimeBase =  thisPacket.stimTimeBase - thisPacket.stimTimeBase(1);
+            thisPacket.stimMetaData.stimTypes = mergedPackets{ss}{ii}.stimulus.metaData.stimTypes(jj);
             thisPacket.stimMetaData.stimLabels = params.stimMetaData.stimLabels;
-
-            % Accumulate stimuli of the same type
+            
+            % Could make packets here for each event, but not doing it...
+            % Just making the 'accumStimTypes' variable for now.
             accumStimTypes{ss, thisPacket.stimMetaData.stimTypes} = [accumStimTypes{ss, thisPacket.stimMetaData.stimTypes} ; thisPacket.respValues];
         end
     end
@@ -140,7 +142,9 @@ end
 %% Make average packets per subject
 for ss = 1:NSessionsMerged
     for mm = 1:NStimTypes
+        thisPacket = [];
         thisPacket.packetType = 'pupil';
+        thisPacket.sessionDir = '';
         thisPacket.stimulusFile = mergedPackets{ss}{1}.metaData.stimulusFile;
         thisPacket.responseFile = mergedPackets{ss}{1}.metaData.responseFile;
         thisPacket.respValues =  nanmean(accumStimTypes{ss, mm});
@@ -163,23 +167,21 @@ end
 for ss = 1:NSessionsMerged
     plotFig = figure;
     for mm = 1:NStimTypes
-        subplot(1, NStimTypes, mm);
         plot([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)], [0 0], '-k'); hold on;
         plot(avgPackets{ss, mm}.response.timebase, avgPackets{ss, mm}.response.values);
         xlim([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)]);
-        ylim([-0.5 0.5]);
-        pbaspect([1 1 1]);
-        xlabel('Time [s]');
-        ylabel('Amplitude [%]');
     end
+    ylim([-0.5 0.5]);
+    pbaspect([1 1 1]);
+    xlabel('Time [msecs]');
+    ylabel('Amplitude [%]');
     adjustPlot(plotFig);
     
     % Save the plot. If the saving directory doesn't exist, create it.
-    if ~exist(fullfile(saveDir, sessionType{mm}, observerID{mm}), 'dir')
-       mkdir(fullfile(saveDir, sessionType{mm}, observerID{mm})); 
+    outDir = fullfile(saveDir, mergedPackets{ss}{1}.metaData.projectName, mergedPackets{ss}{1}.metaData.subjectName);
+    if ~exist(outDir, 'dir')
+        mkdir(outDir);
     end
-    set(plotFig, 'PaperPosition', [0 0 13 3]);
-    set(plotFig, 'PaperSize', [13 3]);
-    saveas(plotFig, fullfile(saveDir, sessionType{mm}, observerID{mm}, [sessionLabels{mm} '.png']), 'png');
+    saveas(plotFig, fullfile(outDir, [mergedPackets{ss}{1}.metaData.projectName '.png']), 'png');
     close(plotFig);
 end
