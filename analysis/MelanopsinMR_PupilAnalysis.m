@@ -14,20 +14,21 @@ saveDir = fullfile('/Users', userName, '/Dropbox (Aguirre-Brainard Lab)/MELA_ana
 
 % Define the session directories
 sessDirs = {...
-    'MelanopsinMRMaxLMSCRF/HERO_asb1/060816'...
-    'MelanopsinMRMaxLMSCRF/HERO_aso1/060116' ...
+    %     'MelanopsinMRMaxLMSCRF/HERO_asb1/060816'...
+    %     'MelanopsinMRMaxLMSCRF/HERO_aso1/060116' ...
     'MelanopsinMRMaxLMSCRF/HERO_gka1/060616' ...
-    'MelanopsinMRMaxLMSCRF/HERO_mxs1/062416' ...
-    'MelanopsinMRMaxLMSCRF/HERO_mxs1/062816' ...
-    'MelanopsinMRMaxMelCRF/HERO_asb1/060716' ...
-    'MelanopsinMRMaxMelCRF/HERO_aso1/053116' ...
+    %     'MelanopsinMRMaxLMSCRF/HERO_mxs1/062416' ...
+    %     'MelanopsinMRMaxLMSCRF/HERO_mxs1/062816' ...
+    %     'MelanopsinMRMaxMelCRF/HERO_asb1/060716' ...
+    %     'MelanopsinMRMaxMelCRF/HERO_aso1/053116' ...
     'MelanopsinMRMaxMelCRF/HERO_gka1/060216' ...
-    'MelanopsinMRMaxMelCRF/HERO_mxs1/060916' ...
-    'MelanopsinMRMaxMelCRF/HERO_mxs1/061016'
+    %     'MelanopsinMRMaxMelCRF/HERO_mxs1/060916' ...
+    %     'MelanopsinMRMaxMelCRF/HERO_mxs1/061016'
     };
 
 % Define which sessions we'd like to merge
-whichSessionsToMerge = {[1], [2], [3], [4 5], [6], [7], [8], [9 10]};
+%whichSessionsToMerge = {[1], [2], [3], [4 5], [6], [7], [8], [9 10]};
+whichSessionsToMerge = {[1], [2] };
 
 % Set some parameters we need
 normalizationTimeSecs = 0.1;
@@ -46,7 +47,7 @@ for ss = 1:length(sessDirs)
     tmp = strsplit(sessDirs{ss}, '/');
     params.sessionType = tmp{1};
     params.sessionObserver = tmp{2};
-    params.sessionDate = tmp{3};    
+    params.sessionDate = tmp{3};
     
     % Display some useful information
     fprintf('>> Processing <strong>%s</strong> | <strong>%s</strong> | <strong>%s</strong>\n', params.sessionType, params.sessionObserver, params.sessionDate);
@@ -62,7 +63,7 @@ for ss = 1:length(sessDirs)
     params.ResamplingFineFreq           = 1000; % 1 msec
     params.BlinkWindowSample            = -50:50; % Samples surrounding the blink event
     params.TRDurSecs                    = 0.8;
-
+    
     % Make the packets
     params.packetType       = 'pupil';
     params.sessionDir       = fullfile(dropboxDir, sessDirs{ss});
@@ -74,7 +75,7 @@ for ss = 1:length(sessDirs)
         % Set up some parameters
         params.runNum           = ii;
         params.stimulusFile     = fullfile(params.sessionDir, 'MatFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']);
-        params.responseFile     = fullfile(params.sessionDir, 'EyeTrackingFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']);  
+        params.responseFile     = fullfile(params.sessionDir, 'EyeTrackingFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']);
         [params.respValues params.respTimeBase] = loadPupilDataForPackets(params);
         [params.stimValues params.stimTimeBase params.stimMetaData] = makeStimStruct(params);
         packets{ss, ii} = makePacket(params);
@@ -128,7 +129,7 @@ for ss = 1:NSessionsMerged
             thisPacket.respTimeBase = thisPacket.respTimeBase-thisPacket.respTimeBase(1);
             thisPacket.stimValues = mergedPackets{ss}{ii}.stimulus.values(jj, idxToExtract);
             thisPacket.stimTimeBase = mergedPackets{ss}{ii}.stimulus.timebase(idxToExtract);
-             thisPacket.stimTimeBase =  thisPacket.stimTimeBase - thisPacket.stimTimeBase(1);
+            thisPacket.stimTimeBase =  thisPacket.stimTimeBase - thisPacket.stimTimeBase(1);
             thisPacket.stimMetaData.stimTypes = mergedPackets{ss}{ii}.stimulus.metaData.stimTypes(jj);
             thisPacket.stimMetaData.stimLabels = params.stimMetaData.stimLabels;
             
@@ -163,11 +164,72 @@ end
 % Insert code here. Average packets are now in avgPackets{ss, mm}, where ss
 % is subject (with merged session), and mm is stimulus type
 
+% Define a parameter lock matrix, which in this case is empty
+paramLockMatrix = [];
+
+% We will fit each average response as a single stimulus in a packet, so
+% each packet therefore contains a single stimulus instamce.
+defaultParamsInfo.nInstances = 1;
+
+% Announce what we are about to do
+fprintf('>> Fitting two-component model to pupil data (TPUP)\n');
+
+% Pre-allocate a structure to hold the fit results
+twoComponentFitToData(NSessionsMerged,NStimTypes).paramsFit=[];
+twoComponentFitToData(NSessionsMerged,NStimTypes).fVal=[];
+twoComponentFitToData(NSessionsMerged,NStimTypes).fitResponse=[];
+
+% Loop over subjects and stimulus types
+% Skipping the attention task for now
+for ss = 1:NSessionsMerged
+    for mm = 1:NStimTypes-1
+        
+        % Update the user
+        fprintf('* Subject, stimulus <strong>%g</strong> , <strong>%g</strong>', ss, mm);
+        fprintf('\n');
+        
+        % Construct the model object
+        temporalFit = tmriTwoComponentPupilResponse;
+        
+        % Grab a single packet
+        singlePacket=avgPackets{ss, mm};
+        
+        % For now, we need to define an empty HRF field for the
+        % temporalFittingEnginge. This should go away soon.
+        singlePacket.HRF.values=[];
+        singlePacket.HRF.timebase=[];
+        
+        % report fitting progress
+        fprintf('iterations:');
+        
+        % Conduct the fit
+        [paramsFit,fVal,fitResponse] = temporalFit.fitResponse(singlePacket,'defaultParamsInfo',defaultParamsInfo, ...
+            'paramLockMatrix',paramLockMatrix);
+        
+        % Store the fitResponse
+        twoComponentFitToData(ss,mm).paramsFit=paramsFit;
+        twoComponentFitToData(ss,mm).fVal=fVal;
+        twoComponentFitToData(ss,mm).fitResponse=fitResponse;
+        
+        % Report the fit error value:
+        fprintf('\n\t> Fit error value: %g', fVal);
+        fprintf('\n');
+        
+        % Clear the object
+        clear temporalFit;
+        
+    end % loop over subjects
+end % loop over stimuli
+
 %% Plot the data
 for ss = 1:NSessionsMerged
     plotFig = figure;
     for mm = 1:NStimTypes
-        plot([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)], [0 0], '-k'); hold on;
+        plot([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)], [0 0], '-k'); hold on;        
+        % plot a model fit if it is available
+        if ~isempty(twoComponentFitToData(ss,mm).fitResponse)
+            plot(avgPackets{ss, mm}.response.timebase, twoComponentFitToData(ss,mm).fitResponse,'--k');
+        end % check if fitResponse is not empty
         plot(avgPackets{ss, mm}.response.timebase, avgPackets{ss, mm}.response.values);
         xlim([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)]);
     end
