@@ -104,12 +104,8 @@ for ss = 1:length(sessDirs)
         
         % Extract information about the stimulus label
         % old line [uniqueCombos{ii}, ~, idx] = unique([packets{ss, ii}.stimulus.metaData.params.theDirections' packets{ss, ii}.stimulus.metaData.params.theContrastRelMaxIndices'], 'rows');
-        % load the .mat file containing the stimulus information
-        stimfile = matfile(fullfile(params.sessionDir, 'MatFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']));
-        % had to create new variable to allow indexing into stimfileParams
-        stimfileParams = stimfile.params
-        % unchanged from before
-        [uniqueCombos{ii}, ~, idx] = unique([stimfileParams.theDirections' stimfileParams.theContrastRelMaxIndices'], 'rows');
+        stimfile = matfile(fullfile(sessDir, 'MatFiles', sprintf('HERO_asb1-MelanopsinMRMaxLMSCRF-%02d.mat',ii)))
+        [uniqueCombos{ii}, ~, idx] = unique([stimfile.params.theDirections' stimfile.params.theContrastRelMaxIndices'], 'rows');
         allIndicesTmp = [allIndicesTmp idx];
     end
     
