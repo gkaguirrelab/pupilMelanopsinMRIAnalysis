@@ -181,6 +181,7 @@ twoComponentFitToData(NSessionsMerged,NStimTypes).fitResponse=[];
 % Loop over subjects and stimulus types
 % Skipping the attention task for now
 for ss = 1:NSessionsMerged
+    figure;
     for mm = 1:NStimTypes-1
         
         % Update the user
@@ -193,6 +194,7 @@ for ss = 1:NSessionsMerged
         % Grab a single packet
         singlePacket=avgPackets{ss, mm};
         
+
         % For now, we need to define an empty HRF field for the
         % temporalFittingEnginge. This should go away soon.
         singlePacket.HRF.values=[];
@@ -210,6 +212,9 @@ for ss = 1:NSessionsMerged
         twoComponentFitToData(ss,mm).fVal=fVal;
         twoComponentFitToData(ss,mm).fitResponse=fitResponse;
         
+        
+        plot(singlePacket.response.values); hold on;
+        plot(fitResponse);
         % Report the fit error value:
         fprintf('\n\t> Fit error value: %g', fVal);
         fprintf('\n');
