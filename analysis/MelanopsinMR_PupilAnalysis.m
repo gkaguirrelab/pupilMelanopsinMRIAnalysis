@@ -78,93 +78,99 @@ for ss = 1:length(sessDirs)
         [params.respValues params.respTimeBase] = loadPupilDataForPackets(params);
         [params.stimValues params.stimTimeBase params.stimMetaData] = makeStimStruct(params);
         packets{ss, ii} = makePacket(params);
-     
+    end
+    fprintf('\n');
+end
+
+%% Merge sessions
+NSessionsMerged = length(whichSessionsToMerge);
+for mm = 1:NSessionsMerged
+    mergeIdx = whichSessionsToMerge{mm};
+    mergedPacket = {packets{mergeIdx, :}};
+    mergedPacket = mergedPacket(~cellfun('isempty', mergedPacket));
+    mergedPackets{mm} = mergedPacket;
+end
+
+%% Assemble the different stimTypes
+for ss = 1:NSessionsMerged
+    % Make an 'accumulator'
+    NStimTypes = 6;
+    for mm = 1:NStimTypes
+        accumStimTypes{ss, mm} = [];
+    end
+    
+    NRunsTotal = length(mergedPackets{ss});
+    for ii = 1:NRunsTotal
+        
         % Find the stimulus onsets so that we can align the data to it. We
         % do that by finding a [0 1] edge from a difference operator.
-        tmp = sum(packets{ss, ii}.stimulus.values);
+        tmp = sum(mergedPackets{ss}{ii}.stimulus.values);
         tmp2 = diff(tmp);
         tmp2(tmp2 < 0) = 0;
         tmp2(tmp2 > 0) = 1;
         stimOnsets = strfind(tmp2, [0 1]);
         
-        % Make an 'accumulator'
-        NStimTypes = length(packets{ss, ii}.stimulus.metaData.stimLabels);
-        for mm = 1:NStimTypes
-        accumStimTypes{mm} = [];
-        end
-        
         % Get the number of segments from the stimulus onsets
         NSegments = length(stimOnsets);
         t = (0:extractionDurInd)/1000;
         for jj = 1:length(stimOnsets)
-            if (stimOnsets(jj)+extractionDurInd) <= length(packets{ss, ii}.response.values)
+            if (stimOnsets(jj)+extractionDurInd) <= length(mergedPackets{ss}{ii}.response.values)
                 idxToExtract = stimOnsets(jj):(stimOnsets(jj)+extractionDurInd);
             else
-                idxToExtract = stimOnsets(jj):length(packets{ss, ii}.response.values);
+                idxToExtract = stimOnsets(jj):length(mergedPackets{ss}{ii}.response.values);
             end
             thisPacket.packetType = 'pupil';
-            thisPacket.sessionDir = params.sessionDir;
-            thisPacket.stimulusFile = params.stimulusFile;
-            thisPacket.responseFile = params.responseFile;     
-            thisPacket.respValues = packets{ss, ii}.response.values(idxToExtract);
+            thisPacket.stimulusFile = mergedPackets{ss}{ii}.metaData.stimulusFile;
+            thisPacket.responseFile = mergedPackets{ss}{ii}.metaData.responseFile;
+            thisPacket.respValues = mergedPackets{ss}{ii}.response.values(idxToExtract);
             % Normalize the pupil data
             thisPacket.respValues = (thisPacket.respValues - nanmean(thisPacket.respValues(1:normalizationDurInd)))./nanmean(thisPacket.respValues(1:normalizationDurInd));
-            thisPacket.respTimeBase = packets{ss, ii}.response.timebase(idxToExtract);
-            thisPacket.stimValues = packets{ss, ii}.stimulus.values(jj, idxToExtract);
-            thisPacket.stimTimeBase = packets{ss, ii}.stimulus.timebase(idxToExtract);
+            thisPacket.respTimeBase = mergedPackets{ss}{ii}.response.timebase(idxToExtract);
+            thisPacket.stimValues = mergedPackets{ss}{ii}.stimulus.values(jj, idxToExtract);
+            thisPacket.stimTimeBase = mergedPackets{ss}{ii}.stimulus.timebase(idxToExtract);
             thisPacket.stimMetaData.stimTypes = params.stimMetaData.stimTypes(jj);
             thisPacket.stimMetaData.stimLabels = params.stimMetaData.stimLabels;
-            eventPackets{ss, ii, jj} = makePacket(thisPacket);
-            
+
             % Accumulate stimuli of the same type
-            accumStimTypes{thisPacket.stimMetaData.stimTypes} = [accumStimTypes{thisPacket.stimMetaData.stimTypes} ; thisPacket.respValues];
+            accumStimTypes{ss, thisPacket.stimMetaData.stimTypes} = [accumStimTypes{ss, thisPacket.stimMetaData.stimTypes} ; thisPacket.respValues];
         end
     end
-    fprintf('\n');
 end
 
-%% Fit model to the packets
-% Insert code here. All packets from this analysis are now in packets{ss, ii}, 
-% i.e. each session and run is one entry in that cell array. At this level,
-% each packet is the entire time series, but we could plausibly also set it
-% up differently.
-
-%% Merge the sessions
-NSessionsTotal = length(whichSessionsToMerge);
-for mm = 1:NSessionsTotal
-    thisIdx = whichSessionsToMerge{mm};
-    % Merge data
-    allDataMerged{mm} = [allData{thisIdx}];
-    allIndicesMerged{mm} = [allIndices{thisIdx}];
-    
-    % Extract a label for the session
-    strtmp = strsplit(sessDirs{thisIdx(1)}, '/');
-    sessionLabels{mm} = [strtmp{1} '_' strtmp{2}];
-    sessionType{mm} = strtmp{1};
-    observerID{mm} = strtmp{2};
+%% Make average packets per subject
+for ss = 1:NSessionsMerged
+    for mm = 1:NStimTypes
+        thisPacket.packetType = 'pupil';
+        thisPacket.stimulusFile = mergedPackets{ss}{1}.metaData.stimulusFile;
+        thisPacket.responseFile = mergedPackets{ss}{1}.metaData.responseFile;
+        thisPacket.respValues =  nanmean(accumStimTypes{ss, mm});
+        thisPacket.respTimeBase = mergedPackets{ss}{1}.response.timebase(idxToExtract);
+        thisPacket.respTimeBase = thisPacket.respTimeBase-thisPacket.respTimeBase(1);
+        thisPacket.stimValues = mergedPackets{ss}{1}.stimulus.values(jj, idxToExtract);
+        thisPacket.stimTimeBase = mergedPackets{ss}{1}.stimulus.timebase(idxToExtract);
+        thisPacket.stimTimeBase = thisPacket.stimTimeBase-thisPacket.stimTimeBase(1);
+        thisPacket.stimMetaData.stimTypes = params.stimMetaData.stimTypes(jj);
+        thisPacket.stimMetaData.stimLabels = params.stimMetaData.stimLabels;
+        avgPackets{ss, mm} = makePacket(thisPacket);
+    end
 end
+
+%% Fit model to avg packets
+% Insert code here. Average packets are now in avgPackets{ss, mm}, where ss
+% is subject (with merged session), and mm is stimulus type
 
 %% Plot the data
-for mm = 1:NSessionsTotal
-    NCombos = size(uniqueCombos1, 1);
+for ss = 1:NSessionsMerged
     plotFig = figure;
-    for jj = 1:NCombos
-        subplot(1, NCombos, jj);
-        data = allDataMerged{mm}(:, allIndicesMerged{mm} == jj);
-        data_mean = nanmean(data, 2);
-        data_sem = nanstd(data, [], 2)/sqrt(size(data, 2)); hold on;
-        plot([t(1) t(end)], [0 0], '-k');
-        shadedErrorBar(t, data_mean, data_sem);
-        xlim([t(1) t(end)]);
+    for mm = 1:NStimTypes
+        subplot(1, NStimTypes, mm);
+        plot([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)], [0 0], '-k'); hold on;
+        plot(avgPackets{ss, mm}.response.timebase, avgPackets{ss, mm}.response.values);
+        xlim([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)]);
         ylim([-0.5 0.5]);
         pbaspect([1 1 1]);
         xlabel('Time [s]');
         ylabel('Amplitude [%]');
-        if uniqueCombos1(jj, 1) == 1
-            title([num2str(100*packets{1}.stimulus.metaData.params.theContrastMax*packets{1}.stimulus.metaData.params.theContrastsPct(jj), '%g') '%'])
-        else
-            title('Attention task');
-        end
     end
     adjustPlot(plotFig);
     
