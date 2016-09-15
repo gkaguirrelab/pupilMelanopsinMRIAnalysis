@@ -87,47 +87,39 @@ for ss = 1:length(sessDirs)
         tmp2(tmp2 > 0) = 1;
         stimOnsets = strfind(tmp2, [0 1]);
         
+        % Make an 'accumulator'
+        NStimTypes = length(packets{ss, ii}.stimulus.metaData.stimLabels);
+        for mm = 1:NStimTypes
+        accumStimTypes{mm} = [];
+        end
+        
         % Get the number of segments from the stimulus onsets
         NSegments = length(stimOnsets);
         t = (0:extractionDurInd)/1000;
         for jj = 1:length(stimOnsets)
             if (stimOnsets(jj)+extractionDurInd) <= length(packets{ss, ii}.response.values)
-                Data_Per_Segment(:, jj) = (packets{ss, ii}.response.values(stimOnsets(jj):(stimOnsets(jj)+extractionDurInd)));
+                idxToExtract = stimOnsets(jj):(stimOnsets(jj)+extractionDurInd);
             else
-                Data_Per_Segment(:, jj) = (packets{ss, ii}.response.values(stimOnsets(jj):end));
+                idxToExtract = stimOnsets(jj):length(packets{ss, ii}.response.values);
             end
+            thisPacket.packetType = 'pupil';
+            thisPacket.sessionDir = params.sessionDir;
+            thisPacket.stimulusFile = params.stimulusFile;
+            thisPacket.responseFile = params.responseFile;     
+            thisPacket.respValues = packets{ss, ii}.response.values(idxToExtract);
+            % Normalize the pupil data
+            thisPacket.respValues = (thisPacket.respValues - nanmean(thisPacket.respValues(1:normalizationDurInd)))./nanmean(thisPacket.respValues(1:normalizationDurInd));
+            thisPacket.respTimeBase = packets{ss, ii}.response.timebase(idxToExtract);
+            thisPacket.stimValues = packets{ss, ii}.stimulus.values(jj, idxToExtract);
+            thisPacket.stimTimeBase = packets{ss, ii}.stimulus.timebase(idxToExtract);
+            thisPacket.stimMetaData.stimTypes = params.stimMetaData.stimTypes(jj);
+            thisPacket.stimMetaData.stimLabels = params.stimMetaData.stimLabels;
+            eventPackets{ss, ii, jj} = makePacket(thisPacket);
+            
+            % Accumulate stimuli of the same type
+            accumStimTypes{thisPacket.stimMetaData.stimTypes} = [accumStimTypes{thisPacket.stimMetaData.stimTypes} ; thisPacket.respValues];
         end
-        
-        % Normalize by the dead time
-        for jj  = 1:NSegments
-            Data_Per_Segment(:, jj) = (Data_Per_Segment(:, jj) - nanmean(Data_Per_Segment(1:normalizationDurInd, jj)))./nanmean(Data_Per_Segment(1:normalizationDurInd, jj));
-        end
-        allDataTmp = [allDataTmp Data_Per_Segment];
-        
-        % Extract information about the stimulus label
-        % old line [uniqueCombos{ii}, ~, idx] = unique([packets{ss, ii}.stimulus.metaData.params.theDirections' packets{ss, ii}.stimulus.metaData.params.theContrastRelMaxIndices'], 'rows');
-        % load the .mat file containing the stimulus information
-        stimfile = matfile(fullfile(params.sessionDir, 'MatFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']));
-        % had to create new variable to allow indexing into stimfileParams
-        stimfileParams = stimfile.params
-        % unchanged from before
-        [uniqueCombos{ii}, ~, idx] = unique([stimfileParams.theDirections' stimfileParams.theContrastRelMaxIndices'], 'rows');
-        allIndicesTmp = [allIndicesTmp idx];
     end
-    
-    % Make sure sure that in every run we have the same conditions
-    for ii = 1:NRuns
-        logTest(ii) = all(all(uniqueCombos{ii} == uniqueCombos{1}));
-    end
-    if all(logTest)
-        uniqueCombos1 = uniqueCombos{1};
-    else
-        error('This session is heterogenous');
-    end
-    
-    % Save out the data from this loop.
-    allData{ss} = allDataTmp;
-    allIndices{ss} = allIndicesTmp;
     fprintf('\n');
 end
 
