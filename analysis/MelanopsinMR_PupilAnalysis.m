@@ -202,7 +202,7 @@ for ss = 1:NSessionsMerged
         fprintf('iterations:');
         
         % Conduct the fit
-        [paramsFit,fVal,fitResponse] = temporalFit.fitResponse(singlePacket,'defaultParamsInfo',defaultParamsInfo, ...
+        [paramsFit,fVal,fitResponse] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo, ...
             'paramLockMatrix',paramLockMatrix);
         
         % Store the fitResponse
@@ -244,6 +244,6 @@ for ss = 1:NSessionsMerged
     if ~exist(outDir, 'dir')
         mkdir(outDir);
     end
-    saveas(plotFig, fullfile(outDir, [mergedPackets{ss}{1}.metaData.projectName '.png']), 'png');
+    %saveas(plotFig, fullfile(outDir, [mergedPackets{ss}{1}.metaData.projectName '.png']), 'png');
     close(plotFig);
 end
