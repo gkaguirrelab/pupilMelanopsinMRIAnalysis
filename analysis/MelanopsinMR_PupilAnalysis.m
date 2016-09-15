@@ -224,13 +224,18 @@ end % loop over stimuli
 for ss = 1:NSessionsMerged
     plotFig = figure;
     for mm = 1:NStimTypes
-        plot([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)], [0 0], '-k'); hold on;        
+        plot([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)], [0 0], '-k'); hold on;
         % plot a model fit if it is available
         if ~isempty(twoComponentFitToData(ss,mm).fitResponse)
+<<<<<<< HEAD
             plot(avgPackets{ss, mm}.response.timebase, twoComponentFitToData(ss,mm).fitResponse,'--k');
         end
         plot(avgPackets{ss, mm}.response.timebase, avgPackets{ss, mm}.response.values);
         plot([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)], [0 0], '-k'); hold on;
+=======
+            plot(avgPackets{ss, mm}.response.timebase, 100*twoComponentFitToData(ss,mm).fitResponse,'--k');
+        end % check if fitResponse is not empty
+>>>>>>> Plotting working again
         plot(avgPackets{ss, mm}.response.timebase, 100*avgPackets{ss, mm}.response.values);
         xlim([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)]);
     end
