@@ -26,8 +26,10 @@ sessDirs = {...
     'MelanopsinMRMaxMelCRF/HERO_mxs1/061016'
     };
 
+%sessDirs = {'MelanopsinMRMaxLMSCRF/HERO_gka1/060616'};
 % Define which sessions we'd like to merge
 whichSessionsToMerge = {[1], [2], [3], [4 5], [6], [7], [8], [9 10]};
+%whichSessionsToMerge = {[1]};
 
 % Set some parameters we need
 normalizationTimeSecs = 0.1;
@@ -96,7 +98,8 @@ for ss = 1:NSessionsMerged
     % Make an 'accumulator'
     NStimTypes = 6;
     for mm = 1:NStimTypes
-        accumStimTypes{ss, mm} = [];
+        accumStimTypesResp{ss, mm} = [];
+        accumStimTypesStim{ss, mm} = [];
     end
     
     NRunsTotal = length(mergedPackets{ss});
@@ -134,7 +137,8 @@ for ss = 1:NSessionsMerged
             
             % Could make packets here for each event, but not doing it...
             % Just making the 'accumStimTypes' variable for now.
-            accumStimTypes{ss, thisPacket.stimMetaData.stimTypes} = [accumStimTypes{ss, thisPacket.stimMetaData.stimTypes} ; thisPacket.respValues];
+            accumStimTypesResp{ss, thisPacket.stimMetaData.stimTypes} = [accumStimTypesResp{ss, thisPacket.stimMetaData.stimTypes} ; thisPacket.respValues];
+            accumStimTypesStim{ss, thisPacket.stimMetaData.stimTypes} = [accumStimTypesStim{ss, thisPacket.stimMetaData.stimTypes} ; thisPacket.stimValues];
         end
     end
 end
@@ -147,10 +151,10 @@ for ss = 1:NSessionsMerged
         thisPacket.sessionDir = '';
         thisPacket.stimulusFile = mergedPackets{ss}{1}.metaData.stimulusFile;
         thisPacket.responseFile = mergedPackets{ss}{1}.metaData.responseFile;
-        thisPacket.respValues =  nanmean(accumStimTypes{ss, mm});
+        thisPacket.respValues =  nanmean(accumStimTypesResp{ss, mm});
         thisPacket.respTimeBase = mergedPackets{ss}{1}.response.timebase(idxToExtract);
         thisPacket.respTimeBase = thisPacket.respTimeBase-thisPacket.respTimeBase(1);
-        thisPacket.stimValues = mergedPackets{ss}{1}.stimulus.values(jj, idxToExtract);
+        thisPacket.stimValues = max(accumStimTypesStim{ss, mm});
         thisPacket.stimTimeBase = mergedPackets{ss}{1}.stimulus.timebase(idxToExtract);
         thisPacket.stimTimeBase = thisPacket.stimTimeBase-thisPacket.stimTimeBase(1);
         thisPacket.stimMetaData.stimTypes = params.stimMetaData.stimTypes(jj);
@@ -174,27 +178,24 @@ defaultParamsInfo.nInstances = 1;
 fprintf('>> Fitting two-component model to pupil data (TPUP)\n');
 
 % Pre-allocate a structure to hold the fit results
-twoComponentFitToData(NSessionsMerged,NStimTypes).paramsFit=[];
-twoComponentFitToData(NSessionsMerged,NStimTypes).fVal=[];
-twoComponentFitToData(NSessionsMerged,NStimTypes).fitResponse=[];
+twoComponentFitToData{NSessionsMerged,NStimTypes}.paramsFit=[];
+twoComponentFitToData{NSessionsMerged,NStimTypes}.fVal=[];
+twoComponentFitToData{NSessionsMerged,NStimTypes}.fitResponse=[];
 
 % Loop over subjects and stimulus types
 % Skipping the attention task for now
 for ss = 1:NSessionsMerged
-    figure;
     for mm = 1:NStimTypes-1
-        
         % Update the user
         fprintf('* Subject, stimulus <strong>%g</strong> , <strong>%g</strong>', ss, mm);
         fprintf('\n');
         
         % Construct the model object
-        temporalFit = tmriTwoComponentPupilResponse;
+        temporalFit = tmriTwoComponentPupilResponse();
         
         % Grab a single packet
         singlePacket=avgPackets{ss, mm};
         
-
         % For now, we need to define an empty HRF field for the
         % temporalFittingEnginge. This should go away soon.
         singlePacket.HRF.values=[];
@@ -204,23 +205,20 @@ for ss = 1:NSessionsMerged
         fprintf('iterations:');
         
         % Conduct the fit
-        [paramsFit,fVal,fitResponse] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo, ...
+        [paramsFit,fVal,fitResponse] = temporalFit.fitResponse(singlePacket, 'DefaultParamsInfo', defaultParamsInfo, ...
             'paramLockMatrix',paramLockMatrix);
         
         % Store the fitResponse
-        twoComponentFitToData(ss,mm).paramsFit=paramsFit;
-        twoComponentFitToData(ss,mm).fVal=fVal;
-        twoComponentFitToData(ss,mm).fitResponse=fitResponse;
+        twoComponentFitToData{ss,mm}.paramsFit=paramsFit;
+        twoComponentFitToData{ss,mm}.fVal=fVal;
+        twoComponentFitToData{ss,mm}.fitResponse=fitResponse;
         
-        
-        plot(singlePacket.response.values); hold on;
-        plot(fitResponse);
         % Report the fit error value:
         fprintf('\n\t> Fit error value: %g', fVal);
         fprintf('\n');
         
         % Clear the object
-        clear temporalFit;
+        delete(temporalFit); %clear temporalFit;
         
     end % loop over subjects
 end % loop over stimuli
@@ -231,8 +229,8 @@ for ss = 1:NSessionsMerged
     for mm = 1:NStimTypes
         plot([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)], [0 0], '-k'); hold on;
         % plot a model fit if it is available
-        if ~isempty(twoComponentFitToData(ss,mm).fitResponse)
-            plot(avgPackets{ss, mm}.response.timebase, 100*twoComponentFitToData(ss,mm).fitResponse,'--k');
+         if ~isempty(twoComponentFitToData{ss,mm}) & ~isempty(twoComponentFitToData{ss,mm}.fitResponse)
+            plot(avgPackets{ss, mm}.response.timebase, 100*twoComponentFitToData{ss,mm}.fitResponse,'--k');
         end
         plot(avgPackets{ss, mm}.response.timebase, 100*avgPackets{ss, mm}.response.values);
         xlim([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)]);
