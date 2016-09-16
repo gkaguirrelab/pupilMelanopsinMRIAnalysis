@@ -218,7 +218,7 @@ for ss = 1:NSessionsMerged
         fprintf('\n');
         
         % Clear the object
-        delete(temporalFit); %clear temporalFit;
+        delete(temporalFit);
         
     end % loop over subjects
 end % loop over stimuli
@@ -248,5 +248,6 @@ for ss = 1:NSessionsMerged
         mkdir(outDir);
     end
     saveas(plotFig, fullfile(outDir, [mergedPackets{ss}{1}.metaData.projectName '.png']), 'png');
+    saveas(plotFig, fullfile(outDir, [mergedPackets{ss}{1}.metaData.projectName '.pdf']), 'pdf');
     close(plotFig);
 end
