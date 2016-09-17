@@ -1,5 +1,5 @@
 function MelanopsinMR_PupilAnalysisLocalHookTemplate
-% MelanopsinMR_EyeTracking
+% MelanopsinMR_PupilAnalysis
 %
 % For use with the ToolboxToolbox.  If you copy this into your
 % ToolboxToolbox localToolboxHooks directory (by defalut,
@@ -15,7 +15,7 @@ function MelanopsinMR_PupilAnalysisLocalHookTemplate
 % to match what is true on your computer.
 
 %% Say hello
-fprintf('Running OneLight local hook\n');
+fprintf('Running MelanopsinMR_PupilAnalysis local hook\n');
 
 %% Set preferences
 
