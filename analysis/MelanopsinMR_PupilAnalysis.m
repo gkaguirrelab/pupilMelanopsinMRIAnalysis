@@ -191,21 +191,16 @@ for ss = 1:NSessionsMerged
         fprintf('\n');
         
         % Construct the model object
-        temporalFit = tmriTwoComponentPupilResponse();
+        temporalFit = tfeTwoComponentPupilResponse();
         
         % Grab a single packet
         singlePacket=avgPackets{ss, mm};
-        
-        % For now, we need to define an empty HRF field for the
-        % temporalFittingEnginge. This should go away soon.
-        singlePacket.HRF.values=[];
-        singlePacket.HRF.timebase=[];
-        
+                
         % report fitting progress
         fprintf('iterations:');
         
         % Conduct the fit
-        [paramsFit,fVal,fitResponse] = temporalFit.fitResponse(singlePacket, 'DefaultParamsInfo', defaultParamsInfo, ...
+        [paramsFit,fVal,fitResponse] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo, ...
             'paramLockMatrix',paramLockMatrix);
         
         % Store the fitResponse
