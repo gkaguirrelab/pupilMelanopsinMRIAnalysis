@@ -1,13 +1,13 @@
-%% OLFlickerSensitivityRegistryConfig
+%% pupilMelanopsinMRIAnalysisRegistryConfiguration
 %
-% Declare the toolboxes we need for the IBIOColorDetect project and
+% Declare the toolboxes we need for the pupilMelanopsinMRIAnalysis and
 % write them into a JSON file.  This will let us use the ToolboxToolbox to
 % deliver unto us the perfect runtime environment for this project.
 %
-% 2016 benjamin.heasly@gmail.com
 
 % Clear
 clear;
+% Cleared
 
 %% Declare some toolboxes we want.
 config = [ ...
@@ -16,10 +16,10 @@ config = [ ...
     'type', 'git', ...
     'url', 'https://github.com/brainardlab/BrainardLabToolbox.git'), ...
     tbToolboxRecord( ...
-    'name', 'mriTemporalFitting', ...
+    'name', 'temporalFittingEngine', ...
     'type', 'git', ...
     'url', 'https://github.com/gkaguirrelab/temporalFittingEngine.git')];
 
 %% Write the config to a JSON file.
-configPath = 'MelanopsinMR_PupilAnalysisConfig.json';
+configPath = 'pupilMelanopsinMRIAnalysisConfig.json';
 tbWriteConfig(config, 'configPath', configPath);
