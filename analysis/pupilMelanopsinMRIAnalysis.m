@@ -195,7 +195,12 @@ for ss = 1:NSessionsMerged
         
         % Grab a single packet
         singlePacket=avgPackets{ss, mm};
-                
+
+        % Check if the packet is valid
+        if temporalFit.isPacket(singlePacket)
+        fprintf('packet is valid\n');
+        end
+        
         % report fitting progress
         fprintf('iterations:');
         
