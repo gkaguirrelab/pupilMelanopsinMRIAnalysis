@@ -1,5 +1,5 @@
-function pupilMelanopsinMRIAnalysisConfigLocalHookTemplate
-% pupilMelanopsinMRIAnalysisConfig
+function MelanopsinMR_PupilAnalysis
+% MelanopsinMR_PupilAnalysis
 %
 % For use with the ToolboxToolbox.  If you copy this into your
 % ToolboxToolbox localToolboxHooks directory (by defalut,
@@ -15,7 +15,7 @@ function pupilMelanopsinMRIAnalysisConfigLocalHookTemplate
 % to match what is true on your computer.
 
 %% Say hello
-fprintf('Running pupilMelanopsinMRIAnalysisConfig local hook\n');
+fprintf('Running MelanopsinMR_PupilAnalysis local hook\n');
 
 %% Set preferences
 
@@ -40,4 +40,4 @@ setpref('OneLight', 'dropboxPath', dropboxBaseDir);
 % Set the data path
 setpref('OneLight', 'dataPath', dataPath);
 
-addpath(genpath(['/Users/' userID '/Documents/MATLAB/Analysis/pupilMelanopsinMRIAnalysis']));
+addpath(genpath(['/Users/' userID '/Documents/MATLAB/Analysis/MelanopsinMR_PupilAnalysis']));
