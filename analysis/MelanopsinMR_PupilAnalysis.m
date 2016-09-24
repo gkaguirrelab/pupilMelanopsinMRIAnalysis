@@ -5,7 +5,7 @@
 
 % Housekeeping
 clearvars; close all; clc;
-warning off;
+warning on;
 
 % Discover user name and set Dropbox path
 [~, userName] = system('whoami');
@@ -15,7 +15,7 @@ saveDir = fullfile('/Users', userName, '/Dropbox (Aguirre-Brainard Lab)/MELA_ana
 
 % Define the session directories
 sessDirs = {...
-    'MelanopsinMRMaxLMSCRF/HERO_asb1/060816'...
+    'MelanopsinMRMaxLMSCRF/HERO_asb1/060816' ...
     'MelanopsinMRMaxLMSCRF/HERO_aso1/060116' ...
     'MelanopsinMRMaxLMSCRF/HERO_gka1/060616' ...
     'MelanopsinMRMaxLMSCRF/HERO_mxs1/062816' ...
@@ -191,31 +191,19 @@ for ss = 1:NSessionsMerged
         fprintf('\n');
         
         % Construct the model object
-        temporalFit = tfeTwoComponentPupilResponse();
+        temporalFit = tfeTPUP('verbosity','high');
         
         % Grab a single packet
         singlePacket=avgPackets{ss, mm};
-
-        % Check if the packet is valid
-        if temporalFit.isPacket(singlePacket)
-        fprintf('packet is valid\n');
-        end
-        
-        % report fitting progress
-        fprintf('iterations:');
         
         % Conduct the fit
-        [paramsFit,fVal,fitResponse] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo, ...
+        [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo, ...
             'paramLockMatrix',paramLockMatrix);
         
         % Store the fitResponse
         twoComponentFitToData{ss,mm}.paramsFit=paramsFit;
         twoComponentFitToData{ss,mm}.fVal=fVal;
-        twoComponentFitToData{ss,mm}.fitResponse=fitResponse;
-        
-        % Report the fit error value:
-        fprintf('\n\t> Fit error value: %g', fVal);
-        fprintf('\n');
+        twoComponentFitToData{ss,mm}.modelResponseStruct=modelResponseStruct;
         
         % Clear the object
         delete(temporalFit);
@@ -229,8 +217,8 @@ for ss = 1:NSessionsMerged
     for mm = 1:NStimTypes
         plot([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)], [0 0], '-k'); hold on;
         % plot a model fit if it is available
-         if ~isempty(twoComponentFitToData{ss,mm}) & ~isempty(twoComponentFitToData{ss,mm}.fitResponse)
-            plot(avgPackets{ss, mm}.response.timebase, 100*twoComponentFitToData{ss,mm}.fitResponse,'--k');
+         if isfield(twoComponentFitToData{ss,mm}, 'modelResponseStruct')
+            plot(twoComponentFitToData{ss, mm}.modelResponseStruct.timebase, 100*twoComponentFitToData{ss,mm}.modelResponseStruct.values,'--k');
         end
         plot(avgPackets{ss, mm}.response.timebase, 100*avgPackets{ss, mm}.response.values);
         xlim([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)]);
