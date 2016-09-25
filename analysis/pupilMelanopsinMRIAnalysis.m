@@ -1,4 +1,4 @@
-%% MelanopsinMR_PupilAnalysis.m
+%% pupilMelanopsinMRIAnalysis.m
 %
 % Program to run data analysis on pupil data collected within the
 % `MelanopsinMR` project.
