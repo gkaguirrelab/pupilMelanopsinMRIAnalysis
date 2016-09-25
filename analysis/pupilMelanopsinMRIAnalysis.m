@@ -78,7 +78,7 @@ for ss = 1:length(sessDirs)
         params.stimulusFile     = fullfile(params.sessionDir, 'MatFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']);
         params.responseFile     = fullfile(params.sessionDir, 'EyeTrackingFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']);
         [params.respValues params.respTimeBase] = loadPupilDataForPackets(params);
-        [params.stimValues params.stimTimeBase params.stimMetaData] = makeStimStruct(params);
+        [params.stimValues params.stimTimeBase params.stimMetaData] = pupilMelanopsinMRImakeStimStruct(params);
         packets{ss, ii} = makePacket(params);
     end
     fprintf('\n');
