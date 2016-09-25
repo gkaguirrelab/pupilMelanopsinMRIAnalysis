@@ -1,10 +1,10 @@
-function MelanopsinMR_PupilAnalysis
-% MelanopsinMR_PupilAnalysis
+function pupilMelanopsinMRIAnalysis
+% pupilMelanopsinMRIAnalysis
 %
 % For use with the ToolboxToolbox.  If you copy this into your
 % ToolboxToolbox localToolboxHooks directory (by defalut,
 % ~/localToolboxHooks) and delete "LocalHooksTemplate" from the filename,
-% this will get run when you execute tbUse({'pupilMelanopsinMRIAnalysisConfig'}) to set up for
+% this will get run when you execute tbUse({'pupilMelanopsinMRIAnalysis'}) to set up for
 % this project.  You then edit your local copy to match your local machine.
 %
 % The thing that this does is add subfolders of the project to the path as
@@ -15,7 +15,7 @@ function MelanopsinMR_PupilAnalysis
 % to match what is true on your computer.
 
 %% Say hello
-fprintf('Running MelanopsinMR_PupilAnalysis local hook\n');
+fprintf('Running pupilMelanopsinMRIAnalysis local hook\n');
 
 %% Set preferences
 
@@ -40,4 +40,4 @@ setpref('OneLight', 'dropboxPath', dropboxBaseDir);
 % Set the data path
 setpref('OneLight', 'dataPath', dataPath);
 
-addpath(genpath(['/Users/' userID '/Documents/MATLAB/Analysis/MelanopsinMR_PupilAnalysis']));
+addpath(genpath(['/Users/' userID '/Documents/MATLAB/Analysis/pupilMelanopsinMRIAnalysis']));
