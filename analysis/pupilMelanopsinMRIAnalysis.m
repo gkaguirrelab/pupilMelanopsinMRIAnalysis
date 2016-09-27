@@ -166,6 +166,8 @@ end
 %% Fit model to avg packets
 twoComponentFitToData = fitTPUPModelToAverageResponse(avgPackets);
 
+%% call out to fitIAMPModelToIndividualResponse here
+
 %% Plot the data
 for ss = 1:NSessionsMerged
     plotFig = figure;
