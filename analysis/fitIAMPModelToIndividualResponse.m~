@@ -118,18 +118,10 @@ fprintf('>> Fitting individual amplitude model to data (IAMP)\n');
 
 
 for ss = 1:size(accumStimTypesRespRaw,1) % Looping over subjects
-    betaPerAmplitude{ss,1} = []
-            betaPerAmplitude{ss,2} = []
-            betaPerAmplitude{ss,3} = []
-            betaPerAmplitude{ss,4} = []
-            betaPerAmplitude{ss,5} = []
     for cc = 1:(size(accumStimTypesRespRaw,2)-1) % Looping over stimulus types, skipping attention tasks
         % Update the user
         fprintf('* Subject, Contrast <strong>%g</strong> of <strong>%g</strong>', ss, 5);
         fprintf('\n');
-        
-        % allocate room for results
-       
         
         % Update the packet to have current kernel and stimulus profile
         % Note that the kernel should be scaled to have a unit excursion
@@ -161,7 +153,9 @@ for ss = 1:size(accumStimTypesRespRaw,1) % Looping over subjects
             IAMPFitToData{ss,cc}{1,ii}.fVal=fVal;
             IAMPFitToData{ss,cc}{1,ii}.modelResponseStruct=modelResponseStruct;
             betaPerAmplitude{ss,cc} = [betaPerAmplitude{ss,cc} paramsFit.paramMainMatrix];
-          
+            
+            
+            IAMPFitToData{ss,cc}{2,ii}.paramsFit = 2
             
         end % loop over events
         
