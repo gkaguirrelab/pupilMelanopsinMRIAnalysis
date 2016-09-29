@@ -4,6 +4,10 @@ function [values TimeVectorFine] = loadPupilDataForPackets(params)
 %% STIMULUS VALUES
 Data_Stimulus = load(params.stimulusFile);
 
+%% Calibration Factor: based on calibration runs, the conversion factor from camera units to mm width
+calibration = load(params.calibrationFile);
+calibrationFactor = calibration.params.cameraUnitsToMmWidthMean;
+
 % Extract how many runs are needed
 NTRsExpected = sum(Data_Stimulus.params.trialDuration)/params.TRDurSecs;
 
@@ -31,8 +35,8 @@ for rr = 1:length(Data_LiveTrack.params.Report)
             Data_LiveTrack_TTLPulses = [Data_LiveTrack_TTLPulses Data_LiveTrack_TTLPulses_raw(rr) 0];
             
             % We use the pupil width as the index of pupil diameter
-            Data_LiveTrack_PupilDiameter = [Data_LiveTrack_PupilDiameter Data_LiveTrack.params.Report(rr).PupilWidth_Ch01 ...
-                Data_LiveTrack.params.Report(rr).PupilWidth_Ch02];
+            Data_LiveTrack_PupilDiameter = [Data_LiveTrack_PupilDiameter Data_LiveTrack.params.Report(rr).PupilWidth_Ch01/calibrationFactor ...
+                Data_LiveTrack.params.Report(rr).PupilWidth_Ch02/calibrationFactor];
             
             % Special case
             if strcmp(params.sessionDate, '060616') && strcmp(params.sessionObserver, 'HERO_gka1');
@@ -44,7 +48,7 @@ for rr = 1:length(Data_LiveTrack.params.Report)
             end
         case 30
             Data_LiveTrack_TTLPulses = [Data_LiveTrack_TTLPulses Data_LiveTrack_TTLPulses_raw(rr)];
-            Data_LiveTrack_PupilDiameter = [Data_LiveTrack_PupilDiameter Data_LiveTrack.params.Report(rr).LeftPupilWidth];
+            Data_LiveTrack_PupilDiameter = [Data_LiveTrack_PupilDiameter Data_LiveTrack.params.Report(rr).LeftPupilWidth/calibrationFactor];
             Data_LiveTrack_IsTracked = [Data_LiveTrack_IsTracked Data_LiveTrack.params.Report(rr).PupilTracked];
             
     end
