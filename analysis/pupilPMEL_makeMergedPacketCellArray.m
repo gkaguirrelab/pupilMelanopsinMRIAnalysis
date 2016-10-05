@@ -1,4 +1,4 @@
-function [ mergedPacketCellArray ] = pupilPMEL_makeMergedPacketCellArray( userName )
+function [ mergedPacketCellArray, params ] = pupilPMEL_makeMergedPacketCellArray( userName )
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
