@@ -77,6 +77,7 @@ for ss = 1:length(sessDirs)
         [params.respValues params.respTimeBase params.lowFreqComponentValues] = loadPupilDataForPackets(params);
         [params.stimValues params.stimTimeBase params.stimMetaData] = pupilMelanopsinMRImakeStimStruct(params);
         packets{ss, ii} = makePacket(params);
+        packets{ss, ii}.response.metaData.lowFreqComponent=params.lowFreqComponentValues;
     end
     fprintf('\n');
 end
