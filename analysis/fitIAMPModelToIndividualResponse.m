@@ -1,4 +1,4 @@
-function [theResult] = fitIAMPModelToIndividualResponse(accumStimTypesResponse,accumStimTypesStimulus, avgPackets)
+function [theResult] = fitIAMPModelToIndividualResponse(mergedPackets)
 
 % Loop across stimulus types (contrast level)
 
@@ -18,8 +18,6 @@ function [theResult] = fitIAMPModelToIndividualResponse(accumStimTypesResponse,a
 %    stimTypes (contrast levels plus attention task)
 %       [make a packet that has a given stimulus profile and kernel]
 %        instances / events
-
-
 
 
 

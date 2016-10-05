@@ -12,92 +12,47 @@ warning on;
 % Discover user name and set Dropbox path
 [~, userName] = system('whoami');
 userName = strtrim(userName);
-dropboxDir = fullfile('/Users', userName, '/Dropbox (Aguirre-Brainard Lab)/MELA_data');
-saveDir = fullfile('/Users', userName, '/Dropbox (Aguirre-Brainard Lab)/MELA_analysis');
+dropboxAnalysisDir = ...
+    fullfile('/Users', userName, ...
+    '/Dropbox (Aguirre-Brainard Lab)/MELA_analysis/pupilMelanopsinMRIAnalysis/packetCache');
 
-% Define the session directories
-sessDirs = {...
-    'MelanopsinMRMaxLMSCRF/HERO_asb1/060816' ...
-    'MelanopsinMRMaxLMSCRF/HERO_aso1/060116' ...
-    'MelanopsinMRMaxLMSCRF/HERO_gka1/060616' ...
-    'MelanopsinMRMaxLMSCRF/HERO_mxs1/062816' ...
-    'MelanopsinMRMaxMelCRF/HERO_asb1/060716' ...
-    'MelanopsinMRMaxMelCRF/HERO_aso1/053116' ...
-    'MelanopsinMRMaxMelCRF/HERO_gka1/060216' ...
-    'MelanopsinMRMaxMelCRF/HERO_mxs1/060916' ...
-    'MelanopsinMRMaxMelCRF/HERO_mxs1/061016'
-    };
 
-%sessDirs = {'MelanopsinMRMaxLMSCRF/HERO_gka1/060616'};
-% Define which sessions we'd like to merge
-whichSessionsToMerge = {[1], [2], [3], [4], [5], [6], [7], [8 9]};
-%whichSessionsToMerge = {[1]};
+% Define packetCacheBehavior. Options include:
+%    'make' - load and process stim/response files, save the packets
+%    'load' - load the packets from the passed hash name
+packetCacheBehavior='make';
+packetCellArrayTag='maxMelLSM_CRF_Pupil';
+packetCellArrayHash='';
 
-% Set some parameters we need
-normalizationTimeSecs = 0.1;
-normalizationDurInd = normalizationTimeSecs*1000-1;
-extractionTimeSecs = 13;
-extractionDurInd = extractionTimeSecs*1000-1;
-
-for ss = 1:length(sessDirs)
-    % Clear some information
-    Data_Per_Segment = [];
-    uniqueCombos = [];
-    allDataTmp = [];
-    allIndicesTmp = [];
+%% Create or load the packetCellArray
+switch packetCacheBehavior
     
-    % Extract some information about this session
-    tmp = strsplit(sessDirs{ss}, '/');
-    params.sessionType = tmp{1};
-    params.sessionObserver = tmp{2};
-    params.sessionDate = tmp{3};
-    
-    % Display some useful information
-    fprintf('>> Processing <strong>%s</strong> | <strong>%s</strong> | <strong>%s</strong>\n', params.sessionType, params.sessionObserver, params.sessionDate);
-    
-    % Determine some parameters
-    switch params.sessionDate
-        case {'053116' '060116' '060216'}
-            params.acquisitionFreq      = 30;
-        otherwise
-            params.acquisitionFreq      = 60;
-    end
-    params.LiveTrackSamplingRate        = 60; % Hz
-    params.ResamplingFineFreq           = 1000; % 1 msec
-    params.BlinkWindowSample            = -50:50; % Samples surrounding the blink event
-    params.TRDurSecs                    = 0.8;
-    
-    % Make the packets
-    params.packetType       = 'pupil';
-    params.sessionDir       = fullfile(dropboxDir, sessDirs{ss});
-    NRuns = length(listdir(fullfile(params.sessionDir, 'MatFiles', '*.mat'), 'files'));
-    
-    % Iterate over runs
-    for ii = 1:NRuns;
-        fprintf('\t* Run <strong>%g</strong> / <strong>%g</strong>\n', ii, NRuns);
-        % Set up some parameters
-        params.runNum           = ii;
-        params.stimulusFile     = fullfile(params.sessionDir, 'MatFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']);
-        params.responseFile     = fullfile(params.sessionDir, 'EyeTrackingFiles', [params.sessionObserver '-' params.sessionType '-' num2str(ii, '%02.f') '.mat']);
+    case 'make'  % If we are not to load the mergedPacketCellArray, then we must generate it
         
-        % new line here
-        calibrationFileTemp  = cellstr(ls(fullfile(params.sessionDir, 'EyeTrackingFiles/ScaleCalibration', '*.mat')));
-        params.calibrationFile = calibrationFileTemp{1,1};
-        [params.respValues params.respTimeBase] = loadPupilDataForPackets(params);
-        [params.stimValues params.stimTimeBase params.stimMetaData] = pupilMelanopsinMRImakeStimStruct(params);
-        packets{ss, ii} = makePacket(params);
-    end
-    fprintf('\n');
+        % Make the packetCellArray
+        [ mergedPacketCellArray ] = pupilPMEL_makeMergedPacketCellArray( userName );
+        
+        % calculate the hex MD5 hash for the packetCellArray
+        packetCellArrayHash = DataHash(mergedPacketCellArray);
+        
+        % Set path to the packetCache and save it using the MD5 hash name
+        packetCacheFileName=fullfile(dropboxAnalysisDir, [packetCellArrayTag '_' packetCellArrayHash '.mat']);
+        save(packetCacheFileName,'mergedPacketCellArray','-v7.3');
+        fprintf(['Saved the packetCellArray with hash ID ' packetCellArrayHash '\n']);
+        
+    case 'load'  % load a cached packetCellArray
+        
+        fprintf('>> Loading cached packetCellArray\n');
+        packetCacheFileName=fullfile(dropboxAnalysisDir, [packetCellArrayTag '_' packetCellArrayHash '.mat']);
+        load(packetCacheFileName);
+        
+    otherwise
+        
+        error('Please define a legal packetCacheBehavior');
 end
 
-%% Merge sessions
-NSessionsMerged = length(whichSessionsToMerge);
-for mm = 1:NSessionsMerged
-    mergeIdx = whichSessionsToMerge{mm};
-    mergedPacket = {packets{mergeIdx, :}};
-    mergedPacket = mergedPacket(~cellfun('isempty', mergedPacket));
-    mergedPackets{mm} = mergedPacket;
-end
+
+
 
 %% Assemble the different stimTypes
 for ss = 1:NSessionsMerged
@@ -108,11 +63,11 @@ for ss = 1:NSessionsMerged
         accumStimTypesStim{ss, mm} = [];
     end
     
-    NRunsTotal = length(mergedPackets{ss});
+    NRunsTotal = length(mergedPacketCellArray{ss});
     for ii = 1:NRunsTotal
         % Find the stimulus onsets so that we can align the data to it. We
         % do that by finding a [0 1] edge from a difference operator.
-        tmp = sum(mergedPackets{ss}{ii}.stimulus.values);
+        tmp = sum(mergedPacketCellArray{ss}{ii}.stimulus.values);
         tmp2 = diff(tmp);
         tmp2(tmp2 < 0) = 0;
         tmp2(tmp2 > 0) = 1;
@@ -122,23 +77,23 @@ for ss = 1:NSessionsMerged
         NSegments = length(stimOnsets);
         t = (0:extractionDurInd)/1000;
         for jj = 1:length(stimOnsets)
-            if (stimOnsets(jj)+extractionDurInd) <= length(mergedPackets{ss}{ii}.response.values)
+            if (stimOnsets(jj)+extractionDurInd) <= length(mergedPacketCellArray{ss}{ii}.response.values)
                 idxToExtract = stimOnsets(jj):(stimOnsets(jj)+extractionDurInd);
             else
-                idxToExtract = stimOnsets(jj):length(mergedPackets{ss}{ii}.response.values);
+                idxToExtract = stimOnsets(jj):length(mergedPacketCellArray{ss}{ii}.response.values);
             end
             thisPacket.packetType = 'pupil';
-            thisPacket.stimulusFile = mergedPackets{ss}{ii}.metaData.stimulusFile;
-            thisPacket.responseFile = mergedPackets{ss}{ii}.metaData.responseFile;
-            thisPacket.respValues = mergedPackets{ss}{ii}.response.values(idxToExtract);
+            thisPacket.stimulusFile = mergedPacketCellArray{ss}{ii}.metaData.stimulusFile;
+            thisPacket.responseFile = mergedPacketCellArray{ss}{ii}.metaData.responseFile;
+            thisPacket.respValues = mergedPacketCellArray{ss}{ii}.response.values(idxToExtract);
             % Normalize the pupil data
             thisPacket.respValues = (thisPacket.respValues - nanmean(thisPacket.respValues(1:normalizationDurInd)))./nanmean(thisPacket.respValues(1:normalizationDurInd));
-            thisPacket.respTimeBase = mergedPackets{ss}{ii}.response.timebase(idxToExtract);
+            thisPacket.respTimeBase = mergedPacketCellArray{ss}{ii}.response.timebase(idxToExtract);
             thisPacket.respTimeBase = thisPacket.respTimeBase-thisPacket.respTimeBase(1);
-            thisPacket.stimValues = mergedPackets{ss}{ii}.stimulus.values(jj, idxToExtract);
-            thisPacket.stimTimeBase = mergedPackets{ss}{ii}.stimulus.timebase(idxToExtract);
+            thisPacket.stimValues = mergedPacketCellArray{ss}{ii}.stimulus.values(jj, idxToExtract);
+            thisPacket.stimTimeBase = mergedPacketCellArray{ss}{ii}.stimulus.timebase(idxToExtract);
             thisPacket.stimTimeBase =  thisPacket.stimTimeBase - thisPacket.stimTimeBase(1);
-            thisPacket.stimMetaData.stimTypes = mergedPackets{ss}{ii}.stimulus.metaData.stimTypes(jj);
+            thisPacket.stimMetaData.stimTypes = mergedPacketCellArray{ss}{ii}.stimulus.metaData.stimTypes(jj);
             thisPacket.stimMetaData.stimLabels = params.stimMetaData.stimLabels;
             
             % Could make packets here for each event, but not doing it...
@@ -155,13 +110,13 @@ for ss = 1:NSessionsMerged
         thisPacket = [];
         thisPacket.packetType = 'pupil';
         thisPacket.sessionDir = '';
-        thisPacket.stimulusFile = mergedPackets{ss}{1}.metaData.stimulusFile;
-        thisPacket.responseFile = mergedPackets{ss}{1}.metaData.responseFile;
+        thisPacket.stimulusFile = mergedPacketCellArray{ss}{1}.metaData.stimulusFile;
+        thisPacket.responseFile = mergedPacketCellArray{ss}{1}.metaData.responseFile;
         thisPacket.respValues =  nanmean(accumStimTypesResp{ss, mm});
-        thisPacket.respTimeBase = mergedPackets{ss}{1}.response.timebase(idxToExtract);
+        thisPacket.respTimeBase = mergedPacketCellArray{ss}{1}.response.timebase(idxToExtract);
         thisPacket.respTimeBase = thisPacket.respTimeBase-thisPacket.respTimeBase(1);
         thisPacket.stimValues = max(accumStimTypesStim{ss, mm});
-        thisPacket.stimTimeBase = mergedPackets{ss}{1}.stimulus.timebase(idxToExtract);
+        thisPacket.stimTimeBase = mergedPacketCellArray{ss}{1}.stimulus.timebase(idxToExtract);
         thisPacket.stimTimeBase = thisPacket.stimTimeBase-thisPacket.stimTimeBase(1);
         thisPacket.stimMetaData.stimTypes = params.stimMetaData.stimTypes(jj);
         thisPacket.stimMetaData.stimLabels = params.stimMetaData.stimLabels;
@@ -173,6 +128,7 @@ end
 twoComponentFitToData = fitTPUPModelToAverageResponse(avgPackets);
 
 %% call out to fitIAMPModelToIndividualResponse here
+[~] = fitIAMPModelToIndividualResponse(mergedPacketCellArray);
 
 %% Plot the data
 for ss = 1:NSessionsMerged
@@ -180,7 +136,7 @@ for ss = 1:NSessionsMerged
     for mm = 1:NStimTypes
         plot([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)], [0 0], '-k'); hold on;
         % plot a model fit if it is available
-         if isfield(twoComponentFitToData{ss,mm}, 'modelResponseStruct')
+        if isfield(twoComponentFitToData{ss,mm}, 'modelResponseStruct')
             plot(twoComponentFitToData{ss, mm}.modelResponseStruct.timebase, 100*twoComponentFitToData{ss,mm}.modelResponseStruct.values,'--k');
         end
         plot(avgPackets{ss, mm}.response.timebase, 100*avgPackets{ss, mm}.response.values);
@@ -191,14 +147,14 @@ for ss = 1:NSessionsMerged
     xlabel('Time [msecs]');
     ylabel('Amplitude [%]');
     adjustPlot(plotFig);
-    title({ mergedPackets{ss}{1}.metaData.projectName, strrep(mergedPackets{ss}{1}.metaData.subjectName, '_', '\_')});
+    title({ mergedPacketCellArray{ss}{1}.metaData.projectName, strrep(mergedPacketCellArray{ss}{1}.metaData.subjectName, '_', '\_')});
     
     % Save the plot. If the saving directory doesn't exist, create it.
-    outDir = fullfile(saveDir, mergedPackets{ss}{1}.metaData.projectName, mergedPackets{ss}{1}.metaData.subjectName);
+    outDir = fullfile(dropboxAnalysisDir, mergedPacketCellArray{ss}{1}.metaData.projectName, mergedPacketCellArray{ss}{1}.metaData.subjectName);
     if ~exist(outDir, 'dir')
         mkdir(outDir);
     end
-    saveas(plotFig, fullfile(outDir, [mergedPackets{ss}{1}.metaData.projectName '.png']), 'png');
-    saveas(plotFig, fullfile(outDir, [mergedPackets{ss}{1}.metaData.projectName '.pdf']), 'pdf');
+    saveas(plotFig, fullfile(outDir, [mergedPacketCellArray{ss}{1}.metaData.projectName '.png']), 'png');
+    saveas(plotFig, fullfile(outDir, [mergedPacketCellArray{ss}{1}.metaData.projectName '.pdf']), 'pdf');
     close(plotFig);
 end
