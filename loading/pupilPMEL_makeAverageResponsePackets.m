@@ -9,7 +9,7 @@ normalizationDurInd = normalizationTimeSecs*1000-1;
 extractionTimeSecs = 13;
 extractionDurInd = extractionTimeSecs*1000-1;
 
-NSessionsMerged=size(mergedPacketCellArray,1);
+NSessionsMerged=size(mergedPacketCellArray,2);
 
 %% Assemble the different stimTypes
 for ss = 1:NSessionsMerged

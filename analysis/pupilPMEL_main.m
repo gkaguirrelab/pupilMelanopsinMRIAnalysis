@@ -20,9 +20,9 @@ dropboxAnalysisDir = ...
 % Define packetCacheBehavior. Options include:
 %    'make' - load and process stim/response files, save the packets
 %    'load' - load the packets from the passed hash name
-packetCacheBehavior='make';
+packetCacheBehavior='load';
 packetCellArrayTag='maxMelLSM_CRF_Pupil';
-packetCellArrayHash='16d1d8ef6afa92c8409b763159984bbc';
+packetCellArrayHash='0460faac0fa14f9837e5b7a6775f6258';
 
 %% Create or load the packetCellArray
 switch packetCacheBehavior
@@ -56,13 +56,18 @@ fprintf('>> Making average responses\n');
 [ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray );
 
 %% Fit model to avg packets
-%twoComponentFitToData = fitTPUPModelToAverageResponse(avgPackets);
+twoComponentFitToData = fitTPUPModelToAverageResponse(avgPackets);
 
-%% call out to fitIAMPModelToIndividualResponse here
-fprintf('>> Fitting IAMP model to individual responses\n');
-[~] = fitIAMPModelToIndividualResponse(mergedPacketCellArray);
+%% Fit IAMP model to individual events
+%fprintf('>> Fitting IAMP model to individual responses\n');
+%[~] = fitIAMPModelToIndividualResponse(mergedPacketCellArray);
 
 %% Plot the data
+
+
+NSessionsMerged=size(mergedPacketCellArray,2);
+NStimTypes=6;
+
 for ss = 1:NSessionsMerged
     plotFig = figure;
     for mm = 1:NStimTypes
