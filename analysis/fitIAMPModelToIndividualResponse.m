@@ -1,4 +1,4 @@
-function [theResult] = fitIAMPModelToIndividualResponse(accumStimTypesResponse,accumStimTypesStimulus, avgPackets)
+function [theResult] = fitIAMPModelToIndividualResponse(mergedPackets)
 
 % Loop across stimulus types (contrast level)
 
@@ -20,8 +20,10 @@ function [theResult] = fitIAMPModelToIndividualResponse(accumStimTypesResponse,a
 %        instances / events
 
 
-
-
+normalizationTimeSecs = 0.1;
+normalizationDurInd = normalizationTimeSecs*1000-1;
+extractionTimeSecs = 13;
+extractionDurInd = extractionTimeSecs*1000-1;
 
 
 
@@ -29,7 +31,7 @@ function [theResult] = fitIAMPModelToIndividualResponse(accumStimTypesResponse,a
 % units (diameter, mm) and that began each trial at 0
 for ss = 1:length(mergedPackets)
     % update process
-    fprintf('>> Processing <strong>%s</strong> | <strong>%s</strong> | <strong>%s</strong>\n', params.sessionType, params.sessionObserver, params.sessionDate);
+    fprintf('>> Processing session <strong>%s</strong>\n', ss);
     % create average run from all contrasts levels to be used as a model
     
     
@@ -104,7 +106,7 @@ end % end loop over subjects/sessions
 
 % Define a parameter lock matrix, which in this case is empty
 paramLockMatrix = [];
-IAMPFitToData = []
+IAMPFitToData = [];
 
 % We will fit each average response as a single stimulus in a packet, so
 % each packet therefore contains a single stimulus instance.
@@ -118,11 +120,11 @@ fprintf('>> Fitting individual amplitude model to data (IAMP)\n');
 
 
 for ss = 1:size(accumStimTypesRespRaw,1) % Looping over subjects
-    betaPerAmplitude{ss,1} = []
-            betaPerAmplitude{ss,2} = []
-            betaPerAmplitude{ss,3} = []
-            betaPerAmplitude{ss,4} = []
-            betaPerAmplitude{ss,5} = []
+    betaPerAmplitude{ss,1} = [];
+            betaPerAmplitude{ss,2} = [];
+            betaPerAmplitude{ss,3} = [];
+            betaPerAmplitude{ss,4} = [];
+            betaPerAmplitude{ss,5} = [];
     for cc = 1:(size(accumStimTypesRespRaw,2)-1) % Looping over stimulus types, skipping attention tasks
         % Update the user
         fprintf('* Subject, Contrast <strong>%g</strong> of <strong>%g</strong>', ss, 5);
@@ -134,21 +136,22 @@ for ss = 1:size(accumStimTypesRespRaw,1) % Looping over subjects
         % Update the packet to have current kernel and stimulus profile
         % Note that the kernel should be scaled to have a unit excursion
         
-        singlePacket.stimulus.values = zeros(1,13000)% blip to be convolved with kernel; fixed per subject per contrast
-        singlePacket.stimulus.values(1,1) = 1
-        singlePacket.stimulus.timebase = [0:12999]
-        singlePacket.kernel.values = nanmean(accumStimTypesRespRaw{ss,cc})
+        singlePacket.stimulus.values = zeros(1,13000);  % blip to be convolved with kernel; fixed per subject per contrast
+        singlePacket.stimulus.values(1,1) = 1;
+        singlePacket.stimulus.timebase = [0:12999];
+        singlePacket.kernel.values = nanmean(accumStimTypesRespRaw{ss,cc});
         singlePacket.kernel.values = singlePacket.kernel.values/(abs(min(singlePacket.kernel.values))); % the average of runs of a given contrast level; fixed per subject per contrast
-        singlePacket.response.values = [] % to be filled in for each individual trial
-        singlePacket.response.timebase = [0:12999]
-        singlePacket.metaData = mergedPackets{1,ss}{1,1}.metaData % steals from one of the runs of the same subject
+singlePacket.kernel.timebase = [0:12999];
+        singlePacket.response.values = []; % to be filled in for each individual trial
+        singlePacket.response.timebase = [0:12999];
+        singlePacket.metaData = mergedPackets{1,ss}{1,1}.metaData; % steals from one of the runs of the same subject
         
         
         % Loop over instances / events
         for ii = 1:size(accumStimTypesRespRaw{ss,cc},1)
             
             % Update the packet to have the response values for this event
-            singlePacket.response.values= accumStimTypesRespRaw{ss,cc}(ii,:)
+            singlePacket.response.values= accumStimTypesRespRaw{ss,cc}(ii,:);
             
             % Conduct the fit
             [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix);

@@ -1,4 +1,4 @@
-function [values TimeVectorFine] = loadPupilDataForPackets(params)
+function [Data_LiveTrack_PupilDiameter_FineMasterTime TimeVectorFine Data_LiveTrack_PupilDiameter_FineMasterTime_LowFreqComponent] = loadPupilDataForPackets(params)
 % values = loadPupilDataForPackets(input_dir, stimulus, params)
 
 %% STIMULUS VALUES
@@ -119,25 +119,28 @@ Data_LiveTrack_PupilDiameter_FineMasterTime(Data_LiveTrack_BlinkIdx) = NaN;
 % Interpolate the elements
 Data_LiveTrack_PupilDiameter_FineMasterTime(isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)) = interp1(TimeVectorFine(~isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)), Data_LiveTrack_PupilDiameter_FineMasterTime(~isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)), TimeVectorFine(isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)));
 % Get the DC
-Data_LiveTrack_PupilDiameter_FineMasterTime_DC = nanmean(Data_LiveTrack_PupilDiameter_FineMasterTime);
-
-Data_LiveTrack_PupilDiameter_FineMasterTime_MeanCentered = (Data_LiveTrack_PupilDiameter_FineMasterTime-nanmean(Data_LiveTrack_PupilDiameter_FineMasterTime))./(nanmean(Data_LiveTrack_PupilDiameter_FineMasterTime));
 
 %%
+% For now, we want to look at relationship between baseline pupil size and
+% amplitude on data that has not already been filtered. The only change
+% is to add a final line that defines values without manipulating by the
+% filtered component
+
 % Low-pass filter the pupil data
 % Set up filter properties
-NFreqsToFilter = 8; % Number of low frequencies to remove
-X = [];
-for ii = 1:NFreqsToFilter
+nHarmonicsToFilter = round(...    % Take the closeset integer number of frequencies
+                 ((max(TimeVectorFine)+1)/1000.)/ ... % Total duration of the data in seconds (assuming a deltaT of 1 msec)
+                 (1/params.lowFreqFilterHz));  % the boundary low frequency
+
+for ii = 1:nHarmonicsToFilter
     X(2*ii-1,:) = sin(linspace(0, 2*pi*ii, size(TimeVectorFine, 2)));
     X(2*ii,:) = cos(linspace(0, 2*pi*ii, size(TimeVectorFine, 2)));
 end
+X(nHarmonicsToFilter*2+1,:) = ones(1,size(TimeVectorFine, 2)); % create an intercept term
 
 % Filter it
-[b, bint, r] = regress(Data_LiveTrack_PupilDiameter_FineMasterTime_MeanCentered',X');
+[b, bint, r] = regress(Data_LiveTrack_PupilDiameter_FineMasterTime',X');
 
-% Create the filtered version
-Data_LiveTrack_PupilDiameter_FineMasterTime_MeanCentered_f = r';
-Data_LiveTrack_PupilDiameter_FineMasterTime_LowFreq = Data_LiveTrack_PupilDiameter_FineMasterTime_MeanCentered-r';
-% Add the DC back in
-values = Data_LiveTrack_PupilDiameter_FineMasterTime_DC + Data_LiveTrack_PupilDiameter_FineMasterTime_DC*Data_LiveTrack_PupilDiameter_FineMasterTime_MeanCentered_f;
+% Obtain the low-frequency component
+Data_LiveTrack_PupilDiameter_FineMasterTime_LowFreqComponent = Data_LiveTrack_PupilDiameter_FineMasterTime-r';
+
