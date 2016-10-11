@@ -247,19 +247,22 @@ end % loop over filter status
 % Clear the object
 delete(temporalFit);
 
-
-% Make some plots
-
-% Comparing amplitudes obtained with and without filtering
-
-
-
-
-% Plotting Amplitude vs. Baseline Size, comparing the results of filtered
-% and unfiltered data
-
 % First determine the R2 values
 
+subjectKey = {'HERO_asb1';	'HERO_aso1';	'HERO_gka1';	'HERO_mxs1';	'HERO_asb1';	'HERO_aso1';	'HERO_gka1';	'HERO_mxs1'};
+projectKey = {'LMS'; 'LMS'; 'LMS'; 'LMS'; 'Melanopsin'; 'Melanopsin';	'Melanopsin';	'Melanopsin'};
+subjectsLMS = [];
+subjectsMel = [];
+for x = 1:length(projectKey);
+    if strcmp(projectKey(x), 'LMS');
+        subjectsLMS = [subjectsLMS x];
+    end
+    if strcmp(projectKey(x), 'Melanopsin');
+        subjectsMel = [subjectsMel x];
+    end
+end
+
+% First determine R2
 for s = 1:8;
     rsqCombined{1}{s,1} = [];
     rsqCombined{1}{s,2} = [];
@@ -299,172 +302,163 @@ for s = 1:8;
 end
 
 
-for s = 1:8;
+% plot LMS subjects
+f = 2; % we're plotting only the data that has the low frequency component removed
+plotFig = figure;
+for s = subjectsLMS;
     colorList = ['r', 'b', 'g', 'y', 'm'];
     contrastList = {'25%', '50%', '100%', '200%', '400%'};
     legendInfo = [[], [], [], [], []];
-    plotFig = figure
+    
     hold on
     
-    for f = 1:length(filterStatus);
+    
+    
+    
+    subplot(1, 4, s)
+    for c = 1:5
         
+        x = baselineSizeCombined{1,f}{s,c};
+        y = beta{1,f}{s,c};
         
-        subplot(1, 2, f)
-        for c = 1:5
-            
-            x = baselineSizeCombined{1,f}{s,c};
-            y = beta{1,f}{s,c};
-            
-            xnan = isnan(x);
-            
-            xnanlist = [];
-            hits = 0;
-            for xx = 1:length(x);
-                if xnan(xx) == 1;
-                    hits = hits+1;
-                    x(xx-(hits-1)) = [];
-                    y(xx-(hits-1)) = [];
-                    
-                end
+        xnan = isnan(x);
+        
+        xnanlist = [];
+        hits = 0;
+        for xx = 1:length(x);
+            if xnan(xx) == 1;
+                hits = hits+1;
+                x(xx-(hits-1)) = [];
+                y(xx-(hits-1)) = [];
+                
             end
-            coeffs = polyfit(x, y, 1);
-            fittedX = linspace(min(x), max(x), 200);
-            fittedY = polyval(coeffs, fittedX);
-            plot(x, y,'o', 'Color', colorList(c))
-            hold on
-            
-            %pbaspect([1 1 1]);
-            xlabel('Baseline Size');
-            ylabel('Beta');
-            
-            title(['Subject: ', subjectKey{s}, ', Project: ', projectKey{s}, filterStatus{f}])
-            
-            
-            
-            legendInfo{c} = [contrastList{c} [' R2 = ' num2str(rsqCombined{f}{s,c}(1))]];
-            
-            
-            
-            
         end
-        legend(legendInfo)
-        for c = 1:5
-            
-            
-            x = baselineSizeCombined{1,f}{s,c};
-            y = beta{1,f}{s,c};
-            
-            xnan = isnan(x);
-            
-            xnanlist = [];
-            hits = 0;
-            for xx = 1:length(x);
-                if xnan(xx) == 1;
-                    hits = hits+1;
-                    x(xx-(hits-1)) = [];
-                    y(xx-(hits-1)) = [];
-                    
-                end
+        coeffs = polyfit(x, y, 1);
+        fittedX = linspace(min(x), max(x), 200);
+        fittedY = polyval(coeffs, fittedX);
+        plot(x, y,'o', 'Color', colorList(c))
+        hold on
+        
+        %pbaspect([1 1 1]);
+        xlabel('Baseline Size');
+        ylabel('Beta');
+        
+        title(['Subject: ', subjectKey{s}, ', Project: ', projectKey{s}, ' ', filterStatus{f}])
+        
+        
+        
+        legendInfo{c} = [contrastList{c} [' R2 = ' num2str(rsqCombined{f}{s,c}(1))]];
+        
+        
+        
+        
+    end
+    legend(legendInfo)
+    for c = 1:5
+        
+        
+        x = baselineSizeCombined{1,f}{s,c};
+        y = beta{1,f}{s,c};
+        
+        xnan = isnan(x);
+        
+        xnanlist = [];
+        hits = 0;
+        for xx = 1:length(x);
+            if xnan(xx) == 1;
+                hits = hits+1;
+                x(xx-(hits-1)) = [];
+                y(xx-(hits-1)) = [];
+                
             end
-            coeffs = polyfit(x, y, 1);
-            fittedX = linspace(min(x), max(x), 200);
-            fittedY = polyval(coeffs, fittedX);
-            plot(fittedX, fittedY, 'LineWidth', 3, 'Color', colorList(c))
         end
+        coeffs = polyfit(x, y, 1);
+        fittedX = linspace(min(x), max(x), 200);
+        fittedY = polyval(coeffs, fittedX);
+        plot(fittedX, fittedY, 'LineWidth', 3, 'Color', colorList(c))
     end
-    %saveas(plotFig, ['~/Desktop/initialAnalyses/noFilter', subjectKey{s}, '-', projectKey{s}, '-sizeByBeta'], 'png')
 end
 
+% now plotting the Melanopsin subjects
+f = 2; % we're plotting only the data that has the low frequency component removed
 plotFig = figure;
-xlim([0.75 2.25]);
-title('How Filtering Affects R2 For LMS/Mel Stimuli') 
-set(gca,'Xtick',1:2,'XTickLabel',{'Unfiltered', 'Filtered'});
-
-hold on
-colorList = ['r', 'b', 'g', 'y', 'm'];
-contrastList = {'25%', '50%', '100%', '200%', '400%'};
-projectKey = {'LMS'; 'LMS'; 'LMS'; 'LMS'; 'Melanopsin'; 'Melanopsin';	'Melanopsin';	'Melanopsin'};
-
-projectKeyLine = [];
-for x = 1:length(projectKey);
-    if strcmp(projectKey{x},'LMS');
-        projectKeyLine{x} = '-';
-    else
-        projectKeyLine{x} = ':';
-    end
-end
-
-
-for s = 1:8;
-    for c = 1:5;
+for s = subjectsMel;
+    colorList = ['r', 'b', 'g', 'y', 'm'];
+    contrastList = {'25%', '50%', '100%', '200%', '400%'};
+    legendInfo = [[], [], [], [], []];
+    
+    hold on
+    
+    
+    
+    
+    subplot(1, 4, s-4)
+    for c = 1:5
         
-        x1 = rsqCombined{1}{s,c}(1);
-        x2 = rsqCombined{2}{s,c}(1);
-        xs = [x1, x2];
+        x = baselineSizeCombined{1,f}{s,c};
+        y = beta{1,f}{s,c};
         
-        plot(xs, projectKeyLine{s}, 'Color', colorList(c))
-        plot(xs, 'o', 'Color', colorList(c))
-    end
-end
-
-% same plot, but with attention
-plotFig = figure;
-xlim([0.75 2.25]);
-title('How Filtering Affects R2 in Attention Trials') 
-set(gca,'Xtick',1:2,'XTickLabel',{'Unfiltered', 'Filtered'});
-
-hold on
-colorList = ['r', 'b', 'g', 'y', 'm', 'b'];
-contrastList = {'25%', '50%', '100%', '200%', '400%'};
-projectKey = {'LMS'; 'LMS'; 'LMS'; 'LMS'; 'Melanopsin'; 'Melanopsin';	'Melanopsin';	'Melanopsin'};
-
-projectKeyLine = [];
-for x = 1:length(projectKey);
-    if strcmp(projectKey{x},'LMS');
-        projectKeyLine{x} = '-';
-    else
-        projectKeyLine{x} = ':';
-    end
-end
-
-
-for s = 1:8;
-    for c = 6;
+        xnan = isnan(x);
         
-        x1 = rsqCombined{1}{s,c}(1);
-        x2 = rsqCombined{2}{s,c}(1);
-        xs = [x1, x2];
+        xnanlist = [];
+        hits = 0;
+        for xx = 1:length(x);
+            if xnan(xx) == 1;
+                hits = hits+1;
+                x(xx-(hits-1)) = [];
+                y(xx-(hits-1)) = [];
+                
+            end
+        end
+        coeffs = polyfit(x, y, 1);
+        fittedX = linspace(min(x), max(x), 200);
+        fittedY = polyval(coeffs, fittedX);
+        plot(x, y,'o', 'Color', colorList(c))
+        hold on
         
-        plot(xs, projectKeyLine{s}, 'Color', colorList(c))
-        plot(xs, 'o', 'Color', colorList(c))
+        %pbaspect([1 1 1]);
+        xlabel('Baseline Size');
+        ylabel('Beta');
+        
+        title(['Subject: ', subjectKey{s}, ', Project: ', projectKey{s}, ' ', filterStatus{f}])
+        
+        
+        
+        legendInfo{c} = [contrastList{c} [' R2 = ' num2str(rsqCombined{f}{s,c}(1))]];
+        
+        
+        
+        
+    end
+    legend(legendInfo)
+    for c = 1:5
+        
+        
+        x = baselineSizeCombined{1,f}{s,c};
+        y = beta{1,f}{s,c};
+        
+        xnan = isnan(x);
+        
+        xnanlist = [];
+        hits = 0;
+        for xx = 1:length(x);
+            if xnan(xx) == 1;
+                hits = hits+1;
+                x(xx-(hits-1)) = [];
+                y(xx-(hits-1)) = [];
+                
+            end
+        end
+        coeffs = polyfit(x, y, 1);
+        fittedX = linspace(min(x), max(x), 200);
+        fittedY = polyval(coeffs, fittedX);
+        plot(fittedX, fittedY, 'LineWidth', 3, 'Color', colorList(c))
     end
 end
 
-plotFigure = figure
-hold on
-title('Baseline Size')
-xlabel('Unfiltered')
-ylabel('Filtered')
 
-for s = 1:8;
-    for c = 1:5;
-        plot(baselineSizeCombined{1}{s,c}, baselineSizeCombined{2}{s,c}, 'o')
-    end
-end
-
-plotFigure = figure
-hold on
-title('Beta')
-xlabel('Unfiltered')
-ylabel('Filtered')
-
-for s = 1:8;
-    for c = 1:5;
-        plot(beta{1}{s,c}, beta{2}{s,c}, 'o')
-    end
-end
-
-
-
+fprintf('The pupil response to a given light stimulus is related to the contrast of the light stimulus; more contrast \nevokes a larger constriction.\n\n')
+fprintf('Baseline pupil size can also predict amplitude of the pupil response to a light stimulus. More precisely, \nsmaller pupils contract less to a light stimulus. If the baseline pupil size and amplitude of pupil \nresponse are related by some slope, the effect of increasing contrast appears to be increasing the \nmagnitude of the slope.\n\n')
+fprintf('The relationship between baseline pupil size and amplitude of the pupil response to light is much stronger \non pupil data that has the low frequency component removed. One possible model for this observation \nis that two independent processes contribute to determining pupil size, a slow wave component and a \ncomponent that determines pupil size as a function of irradiance. When the brain decides how much to \nrespond to a brief flash of light, it scales the degree of response by how big the pupil should as determined \nby irradiance, not actual pupil size.\n')
 
 end % function
