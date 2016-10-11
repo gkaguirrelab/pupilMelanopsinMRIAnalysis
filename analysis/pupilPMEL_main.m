@@ -56,11 +56,11 @@ fprintf('>> Making average responses\n');
 [ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray );
 
 %% Fit model to avg packets
-twoComponentFitToData = fitTPUPModelToAverageResponse(avgPackets);
+%twoComponentFitToData = fitTPUPModelToAverageResponse(avgPackets);
 
 %% Fit IAMP model to individual events
-%fprintf('>> Fitting IAMP model to individual responses\n');
-%[~] = fitIAMPModelToIndividualResponse(mergedPacketCellArray);
+fprintf('>> Fitting IAMP model to individual responses\n');
+[~] = fitIAMPModelToIndividualResponse(mergedPacketCellArray);
 
 %% Plot the data
 
