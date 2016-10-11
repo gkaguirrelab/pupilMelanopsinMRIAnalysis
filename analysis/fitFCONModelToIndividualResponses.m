@@ -1,21 +1,23 @@
-function [theResult] = fitFCONModelToIndividualResponses(mergedPackets, twoComponentFitToData)
+function [theResult] = fitFCONModelToIndividualResponses(mergedPacketCellArray, twoComponentFitToData)
 %
 % Description
 
-contrastbase=[25,50,100,200,400];
+% define the split params
+splitParams.instanceIndex=[]; % will hold the instance index
+splitParams.splitDurationMsecs=13000; % Grab 13 second windows
+splitParams.normFlag=3; % zero center the initial period, % change units
+splitParams.normalizationWindowMsecs=100; % define the size of the norm window
 
-normalizationTimeSecs = 0.1;
-normalizationDurInd = normalizationTimeSecs*1000-1;
-extractionTimeSecs = 13;
-extractionDurInd = extractionTimeSecs*1000-1;
+% instantiate the TPUP model
+tpupModel=tfeTPUP('verbosity','none');
 
 % instantiate the FCON model
 fconModel=tfeFCON('verbosity','high');
 defaultParamsInfo.nInstances=1;
 
 % Loop over sessions
-for ss=1:1 %nSessions
-    
+nSessions=size(mergedPacketCellArray,2);
+for ss=1:nSessions
     
     % Build an fcon strcuture that is to be added to the stimulus struct
     % This contains the lookup table that maps effective contrast to the
@@ -30,44 +32,55 @@ for ss=1:1 %nSessions
         observedParamMatrix(:,cc)=twoComponentFitToData{ss,cc}.paramsFit.paramMainMatrix;
     end
     
-    % We could write some code here to expand the observed parameter matrix
-    % along an interpolated contrast base
-    
-    % Instantiate the TPUP model object to be passed as the forward model in
-    % the FCON implementation
-    tpupModel=tfeTPUP('verbosity','none');
-    
+    % Spline interpolate the observedParamMatrix, following log spacing
+    interpContrastBase=logspace(log10(25/2),log10(400*2),70);
+    for pp=1:nParams
+        interpParamMatrix(pp,:)=spline(log10(contrastbase),observedParamMatrix(pp,:),log10(interpContrastBase));
+    end
+
     % Assemble the fcon structure for this session / subject
-    fcon.contrastbase=contrastbase;
-    fcon.observedParamMatrix=observedParamMatrix;
+    fcon.contrastbase=interpContrastBase;
+    fcon.observedParamMatrix=interpParamMatrix;
     fcon.modelObjHandle=tpupModel;
     fcon.logContrastFlag=false;
     
     
-    % Loop over individual trials (for a given subject / session)
-    for ii=1:nInstances
+    % Loop over runs
+    nRuns=size(mergedPacketCellArray{1,ss});
+    for rr=1:nRuns
         
-        % grab the packet for this particular instance
-        thePacket=mergedPackets(this session, this run, this instance)
-        % keep the kernel field empty
-        % stimulus structure needs the actual stimulus specification, not an
-        % impulse
+        % Get the packet for this run
+        theRunPacket=mergedPacketCellArray{1,ss}{rr};
         
-        % add the fcon structure to the stimulus structure
-        thePacket.stimulus.fcon=fcon;
-        
-        % perform the fit
-        [paramsFit,fVal,modelResponseStruct] = fconModel.fitResponse(thePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',[]);
-        
-        % store the effective contrast from the paramsFit in an appropriate
-        % variable
-        
-        myResultsVariable(session,run,subject)=paramsFit.paramMainMatrix; % this should be a scalar
-        
-        
-    end % loop over instances
-    
-    
+        % Loop over individual instances
+        nInstances=size(theRunPacket.stimulus.values,1);
+        for ii=1:5%nInstances
+            
+            % update the splitParams with the instance index
+            splitParams.instanceIndex = ii;
+            
+            % grab the packet for this particular instance
+            theInstancePacket=splitOffAnInstancePacket(theRunPacket,splitParams);
+            
+            % make sure the kernel field is empty
+            theInstancePacket.kernel=[];
+            
+            % add the fcon structure to the stimulus structure
+            theInstancePacket.stimulus.fcon=fcon;
+            
+            
+            % perform the fit
+            [paramsFit,fVal,modelResponseStruct] = ...
+                fconModel.fitResponse(theInstancePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',[]);
+            
+            % store the effective contrast from the paramsFit in an appropriate
+            % variable
+            
+            myResultsVariable(ss,rr,ii)=paramsFit.paramMainMatrix; % this should be a scalar
+            
+            
+        end % loop over instances
+    end % loop over runs
 end % loop over sessions
 
-end % function
+
