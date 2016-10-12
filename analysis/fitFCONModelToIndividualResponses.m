@@ -70,10 +70,10 @@ for ss=1:nSessions
     fcon.defaultParams=tpupModel.defaultParams('defaultParamsInfo',defaultParamsInfo);
     
     % Loop over runs
-    nRuns=size(mergedPacketCellArray{1,ss});
+    nRuns=size(mergedPacketCellArray{1,ss},2);
     for rr=1:nRuns
         
-        fprintf('* Subject, run <strong>%g</strong> , <strong>%g</strong>\n', ss, rr);
+        fprintf('* Session/Subject, run <strong>%g</strong> , <strong>%g</strong>\n', ss, rr);
 
         % Get the packet for this run
         theRunPacket=mergedPacketCellArray{1,ss}{rr};
@@ -81,7 +81,7 @@ for ss=1:nSessions
         % Loop over individual instances
         nInstances=size(theRunPacket.stimulus.values,1);
         for ii=1:nInstances
-            
+
             % update the splitParams with the instance index
             splitParams.instanceIndex = ii;
             
@@ -101,8 +101,7 @@ for ss=1:nSessions
                 'DiffMinChange', DiffMinChange);
             
             % store the effective contrast from the paramsFit in an appropriate
-            % variable
-            
+            % variable            
             myResultsVariable(ss,rr,ii)=paramsFit.paramMainMatrix; % this should be a scalar
             
             % if the param fit has hit the boundary of the avaialable
@@ -112,8 +111,6 @@ for ss=1:nSessions
                  warningText=['Hit effective contrast boundary'];
                  warning(warningText);
                  ss,rr,ii
-%                fconModel.plot(modelResponseStruct)
-%                fconModel.plot(theInstancePacket.response,'NewWindow',false)
             end
             
             % if this is the first run/instance, add a plot of the
