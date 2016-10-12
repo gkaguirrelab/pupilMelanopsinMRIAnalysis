@@ -43,28 +43,36 @@ for ss=1:nSessions
     
     % Spline interpolate the observedParamMatrix 10x, following log spacing,
     % and extending one 2x spacing above and below the stimulus range
+    fitTypes={'smoothingspline','smoothingspline','linearinterp',...
+        'smoothingspline','exp1','smoothingspline','smoothingspline'};
     for pp=1:nParams
-        if pp==5
+    fitObject=fit(og10(contrastbase),observedParamMatrix(pp,:),fitTypes{pp});
+        switch pp
+            case {1,2,4,6,7}
+            interpParams = ...
+                spline(log10(contrastbase),observedParamMatrix(pp,:),log10(interpContrastBase));
+            case 3
+            linFitModel=fit(log10(contrastbase)',observedParamMatrix(pp,:)','exp1');
+            interpParams=exp1FitModel(log10(interpContrastBase));
+            case 5
             exp1FitModel=fit(log10(contrastbase)',observedParamMatrix(pp,:)','exp1');
             interpParams=exp1FitModel(log10(interpContrastBase));
         end
-        interpParams = ...
-            spline(log10(contrastbase),observedParamMatrix(pp,:),log10(interpContrastBase));
         interpParams(find(interpParams < vlb(pp))) = vlb(pp);
         interpParams(find(interpParams > vub(pp))) = vub(pp);
         paramLookUpMatrix(pp,:)=interpParams;
     end
-        
+    
     % Assemble the fcon structure for this session / subject
     fcon.contrastbase=log10(interpContrastBase);
     fcon.paramLookUpMatrix=paramLookUpMatrix;
     fcon.modelObjHandle=tpupModel;
     fcon.defaultParams=tpupModel.defaultParams('defaultParamsInfo',defaultParamsInfo);
-
+    
     
     % Loop over runs
     nRuns=size(mergedPacketCellArray{1,ss});
-    for rr=6:6%nRuns
+    for rr=1:nRuns
         
         % Get the packet for this run
         theRunPacket=mergedPacketCellArray{1,ss}{rr};
@@ -102,9 +110,20 @@ for ss=1:nSessions
                     myResultsVariable(ss,rr,ii) > max(log10(interpContrastBase)) )
                 fconModel.plot(modelResponseStruct)
                 fconModel.plot(theInstancePacket.response,'NewWindow',false)
-
             end
             
+            % if this is the first run/instance, create a plot of the
+            % available pupil responses across contrast
+            if (rr==1 && ii==1)
+                figure; hold on;
+                for cc=1:round(length(interpContrastBase)/20):length(interpContrastBase)
+                    subclassParams=fcon.defaultParams;
+                    subclassParams.paramMainMatrix = paramLookUpMatrix(:,cc)';
+                    tpupResponseStruct = fcon.modelObjHandle.computeResponse(subclassParams,theInstancePacket.stimulus,[],'AddNoise',false);
+                    plot(tpupResponseStruct.timebase,tpupResponseStruct.values);
+                end
+                hold off;
+            end
         end % loop over instances
     end % loop over runs
 end % loop over sessions

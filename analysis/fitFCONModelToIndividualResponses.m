@@ -20,7 +20,7 @@ nContrasts=5;
 nParams=7; % number of params in the TPUP model
 observedParamMatrix=zeros(nParams,nContrasts);
 interpContrastBase = ...
-    logspace(log10(min(contrastbase)/2),log10(max(contrastbase)*2*2),(nContrasts+3)*100);
+    logspace(log10(min(contrastbase)/2/2),log10(max(contrastbase)*2*2),(nContrasts+4)*100);
 
 % set tpup lower bounds. Should derive this from a call to tpupModel
 vlb = [0.1, 0.1, eps, eps, eps, eps, 0.5];
@@ -30,7 +30,7 @@ vub = [0.4, 0.3, 1, 2, 1, 2, 6.0];
 DiffMinChange=mean(diff(log10(interpContrastBase)));
 
 % instantiate the FCON model
-fconModel=tfeFCON('verbosity','high');
+fconModel=tfeFCON('verbosity','none');
 
 % Loop over sessions
 nSessions=size(mergedPacketCellArray,2);
@@ -41,32 +41,37 @@ for ss=1:nSessions
         observedParamMatrix(:,cc)=twoComponentFitToData{ss,cc}.paramsFit.paramMainMatrix;
     end
     
-    % Spline interpolate the observedParamMatrix 10x, following log spacing,
-    % and extending one 2x spacing above and below the stimulus range
+    % Interpolate the observedParamMatrix to the interpContrastBase.
+    % This implementation allows different fitting functions to be used for
+    % the different tpup parameter types.
+    % Plot the results in a display figure
+    figure
+    fitTypes={'nearestinterp','nearestinterp','poly1',...
+        'nearestinterp','exp1','nearestinterp','nearestinterp'};
+    
     for pp=1:nParams
-        if pp==5
-            exp1FitModel=fit(log10(contrastbase)',observedParamMatrix(pp,:)','exp1');
-            interpParams=exp1FitModel(log10(interpContrastBase));
-        else
-            interpParams = ...
-            spline(log10(contrastbase),observedParamMatrix(pp,:),log10(interpContrastBase));
-        end
+        fitObject=fit(log10(contrastbase)',observedParamMatrix(pp,:)',fitTypes{pp});
+        interpParams=fitObject(log10(interpContrastBase));
         interpParams(find(interpParams < vlb(pp))) = vlb(pp);
         interpParams(find(interpParams > vub(pp))) = vub(pp);
         paramLookUpMatrix(pp,:)=interpParams;
+        subplot(ceil(nParams/2),2,pp);
+        plot(log10(interpContrastBase),interpParams); hold on
+        plot(log10(contrastbase),observedParamMatrix(pp,:),'bo'); hold off
     end
-        
+    
     % Assemble the fcon structure for this session / subject
     fcon.contrastbase=log10(interpContrastBase);
     fcon.paramLookUpMatrix=paramLookUpMatrix;
     fcon.modelObjHandle=tpupModel;
     fcon.defaultParams=tpupModel.defaultParams('defaultParamsInfo',defaultParamsInfo);
-
     
     % Loop over runs
     nRuns=size(mergedPacketCellArray{1,ss});
-    for rr=6:6%nRuns
+    for rr=1:nRuns
         
+        fprintf('* Subject, run <strong>%g</strong> , <strong>%g</strong>', ss, rr);
+
         % Get the packet for this run
         theRunPacket=mergedPacketCellArray{1,ss}{rr};
         
@@ -105,8 +110,21 @@ for ss=1:nSessions
                 fconModel.plot(theInstancePacket.response,'NewWindow',false)
             end
             
+            % if this is the first run/instance, create a plot of the
+            % available pupil responses across contrast
+            if (rr==1 && ii==1)
+                figure; hold on;
+                for cc=1:round(length(interpContrastBase)/10):length(interpContrastBase)
+                    grayShade=.1+([cc/length(interpContrastBase) cc/length(interpContrastBase) cc/length(interpContrastBase)].*0.9);
+                    subclassParams=fcon.defaultParams;
+                    subclassParams.paramMainMatrix = paramLookUpMatrix(:,cc)';
+                    tpupResponseStruct = fcon.modelObjHandle.computeResponse(subclassParams,theInstancePacket.stimulus,[],'AddNoise',false);
+                    plot(tpupResponseStruct.timebase,tpupResponseStruct.values,'Color',grayShade,'LineWidth',2);
+                end
+                hold off;
+            end
         end % loop over instances
     end % loop over runs
 end % loop over sessions
 
-
+end % function
