@@ -47,10 +47,9 @@ for ss=1:nSessions
         if pp==5
             exp1FitModel=fit(log10(contrastbase)',observedParamMatrix(pp,:)','exp1');
             interpParams=exp1FitModel(log10(interpContrastBase));
-        else
-            interpParams = ...
-            spline(log10(contrastbase),observedParamMatrix(pp,:),log10(interpContrastBase));
         end
+        interpParams = ...
+            spline(log10(contrastbase),observedParamMatrix(pp,:),log10(interpContrastBase));
         interpParams(find(interpParams < vlb(pp))) = vlb(pp);
         interpParams(find(interpParams > vub(pp))) = vub(pp);
         paramLookUpMatrix(pp,:)=interpParams;
@@ -103,6 +102,7 @@ for ss=1:nSessions
                     myResultsVariable(ss,rr,ii) > max(log10(interpContrastBase)) )
                 fconModel.plot(modelResponseStruct)
                 fconModel.plot(theInstancePacket.response,'NewWindow',false)
+
             end
             
         end % loop over instances
