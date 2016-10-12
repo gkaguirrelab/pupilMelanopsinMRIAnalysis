@@ -23,6 +23,7 @@ interpContrastBase = ...
     logspace(log10(min(contrastbase)/2/2),log10(max(contrastbase)*2*2),(nContrasts+4)*100);
 
 % set tpup lower bounds. Should derive this from a call to tpupModel
+tpupModelDefaultParams=tpupModel.defaultParams('defaultParamsInfo',defaultParamsInfo);
 vlb = [0.1, 0.1, eps, eps, eps, eps, 0.5];
 vub = [0.4, 0.3, 1, 2, 1, 2, 6.0];
 
@@ -49,6 +50,7 @@ for ss=1:nSessions
     % the different tpup parameter types.
     % Plot the results in a display figure
     figure
+    set(gcf,'name',['Session_' strtrim(num2str(ss))],'numbertitle','off')
     fitTypes={'nearestinterp','nearestinterp','exp1',...
         'nearestinterp','exp1','nearestinterp','nearestinterp'};
 
@@ -60,6 +62,7 @@ for ss=1:nSessions
         paramLookUpMatrix(pp,:)=interpParams;
         subplot(ceil(nParams/2),2,pp);
         plot(log10(interpContrastBase),interpParams); hold on
+        title(tpupModelDefaultParams.paramNameCell{pp});
         plot(log10(contrastbase),observedParamMatrix(pp,:),'bo'); hold off
     end
     
@@ -124,6 +127,7 @@ for ss=1:nSessions
             % available pupil responses across contrast
             if (rr==1 && ii==1)
                 subplot(ceil(nParams/2),2,nParams+1); hold on;
+                title('synthetic pupil responses');
                 for cc=1:round(length(interpContrastBase)/10):length(interpContrastBase)
                     grayShade=0.1+([cc/length(interpContrastBase) cc/length(interpContrastBase) cc/length(interpContrastBase)].*0.9);
                     subclassParams=fcon.defaultParams;

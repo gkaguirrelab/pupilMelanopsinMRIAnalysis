@@ -142,5 +142,5 @@ X(nHarmonicsToFilter*2+1,:) = ones(1,size(TimeVectorFine, 2)); % create an inter
 [b, bint, r] = regress(Data_LiveTrack_PupilDiameter_FineMasterTime',X');
 
 % Obtain the low-frequency component
-Data_LiveTrack_PupilDiameter_FineMasterTime_LowFreqComponent = Data_LiveTrack_PupilDiameter_FineMasterTime-r';
+Data_LiveTrack_PupilDiameter_FineMasterTime_LowFreqComponent = (X'*b)';
 
