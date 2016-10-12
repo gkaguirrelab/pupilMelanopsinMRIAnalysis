@@ -22,7 +22,7 @@ dropboxAnalysisDir = ...
 %    'load' - load the packets from the passed hash name
 packetCacheBehavior='load';
 packetCellArrayTag='maxMelLSM_CRF_Pupil';
-packetCellArrayHash='0460faac0fa14f9837e5b7a6775f6258';
+packetCellArrayHash='d702e5898732600707fb32a2302d4772';
 
 %% Create or load the packetCellArray
 switch packetCacheBehavior
@@ -59,11 +59,11 @@ fprintf('>> Making average responses\n');
 %twoComponentFitToData = fitTPUPModelToAverageResponse(avgPackets);
 
 %% Fit IAMP model to individual events
-fprintf('>> Fitting IAMP model to individual responses\n');
-[~] = fitIAMPModelToIndividualResponse(mergedPacketCellArray);
+%fprintf('>> Fitting IAMP model to individual responses\n');
+%[~] = fitIAMPModelToIndividualResponse(mergedPacketCellArray);
 
 %% Fit FCON model to individual events
-[myResultsVariable] = fitFCONModelToIndividualResponses(mergedPacketCellArray, twoComponentFitToData);
+%[myResultsVariable] = fitFCONModelToIndividualResponses(mergedPacketCellArray, twoComponentFitToData);
 
 
 %% Plot the data
