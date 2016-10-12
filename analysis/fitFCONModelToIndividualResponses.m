@@ -78,6 +78,13 @@ for ss=1:nSessions
         % Get the packet for this run
         theRunPacket=mergedPacketCellArray{1,ss}{rr};
         
+        % Adjust the response in the packet to remove the low-frequency
+        % variation in pupil response
+        lowFreqComponent=theRunPacket.response.metaData.lowFreqComponent;
+        lowFreqComponent=lowFreqComponent-mean(lowFreqComponent);
+        theRunPacket.response.values = ...
+            theRunPacket.response.values - lowFreqComponent;
+        
         % Loop over individual instances
         nInstances=size(theRunPacket.stimulus.values,1);
         for ii=1:nInstances
