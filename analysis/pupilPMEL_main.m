@@ -62,6 +62,10 @@ fprintf('>> Making average responses\n');
 fprintf('>> Fitting IAMP model to individual responses\n');
 [~] = fitIAMPModelToIndividualResponse(mergedPacketCellArray);
 
+%% Fit FCON model to individual events
+[myResultsVariable] = fitFCONModelToIndividualResponses(mergedPacketCellArray, twoComponentFitToData);
+
+
 %% Plot the data
 
 
