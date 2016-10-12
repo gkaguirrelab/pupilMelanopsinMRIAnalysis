@@ -42,7 +42,14 @@ for ss = 1:NSessionsMerged
             thisPacket.packetType = 'pupil';
             thisPacket.stimulusFile = mergedPacketCellArray{ss}{ii}.metaData.stimulusFile;
             thisPacket.responseFile = mergedPacketCellArray{ss}{ii}.metaData.responseFile;
-            thisPacket.respValues = mergedPacketCellArray{ss}{ii}.response.values(idxToExtract);
+            
+            % get response values, and adjust for low freq component
+            fullRespValues=mergedPacketCellArray{ss}{ii}.response.values;
+            lowFreqComponent=mergedPacketCellArray{ss}{ii}.response.metaData.lowFreqComponent;
+            lowFreqComponent=lowFreqComponent-mean(lowFreqComponent);
+            fullRespValues = fullRespValues - lowFreqComponent;
+            thisPacket.respValues = fullRespValues(idxToExtract);
+
             % Normalize the pupil data
             thisPacket.respValues = (thisPacket.respValues - nanmean(thisPacket.respValues(1:normalizationDurInd)))./nanmean(thisPacket.respValues(1:normalizationDurInd));
             thisPacket.respTimeBase = mergedPacketCellArray{ss}{ii}.response.timebase(idxToExtract);
