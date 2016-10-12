@@ -1,11 +1,11 @@
-function [theResult] = fitFCONModelToIndividualResponses(mergedPacketCellArray, twoComponentFitToData)
+function [myResultsVariable] = fitFCONModelToIndividualResponses(mergedPacketCellArray, twoComponentFitToData)
 %
 % Description
 
 % define the split params
 splitParams.instanceIndex=[]; % will hold the instance index
 splitParams.splitDurationMsecs=13000; % Grab 13 second windows
-splitParams.normFlag=3; % zero center the initial period, % change units
+splitParams.normFlag=3; % zero center the initial period, change units
 splitParams.normalizationWindowMsecs=100; % define the size of the norm window
 
 % instantiate the TPUP model
@@ -32,6 +32,9 @@ DiffMinChange=mean(diff(log10(interpContrastBase)));
 % instantiate the FCON model
 fconModel=tfeFCON('verbosity','none');
 
+% Announce what we are about to do
+fprintf('>> Fitting effective contrast (FCON) / TPUP model to individual trials\n');
+
 % Loop over sessions
 nSessions=size(mergedPacketCellArray,2);
 for ss=1:nSessions
@@ -46,9 +49,9 @@ for ss=1:nSessions
     % the different tpup parameter types.
     % Plot the results in a display figure
     figure
-    fitTypes={'nearestinterp','nearestinterp','poly1',...
+    fitTypes={'nearestinterp','nearestinterp','exp1',...
         'nearestinterp','exp1','nearestinterp','nearestinterp'};
-    
+
     for pp=1:nParams
         fitObject=fit(log10(contrastbase)',observedParamMatrix(pp,:)',fitTypes{pp});
         interpParams=fitObject(log10(interpContrastBase));
@@ -70,7 +73,7 @@ for ss=1:nSessions
     nRuns=size(mergedPacketCellArray{1,ss});
     for rr=1:nRuns
         
-        fprintf('* Subject, run <strong>%g</strong> , <strong>%g</strong>', ss, rr);
+        fprintf('* Subject, run <strong>%g</strong> , <strong>%g</strong>\n', ss, rr);
 
         % Get the packet for this run
         theRunPacket=mergedPacketCellArray{1,ss}{rr};
@@ -103,19 +106,22 @@ for ss=1:nSessions
             myResultsVariable(ss,rr,ii)=paramsFit.paramMainMatrix; % this should be a scalar
             
             % if the param fit has hit the boundary of the avaialable
-            % parameter space, stop and plot the result
+            % parameter space, report this
             if (myResultsVariable(ss,rr,ii) < min(log10(interpContrastBase)) || ...
                     myResultsVariable(ss,rr,ii) > max(log10(interpContrastBase)) )
-                fconModel.plot(modelResponseStruct)
-                fconModel.plot(theInstancePacket.response,'NewWindow',false)
+                 warningText=['Hit effective contrast boundary'];
+                 warning(warningText);
+                 ss,rr,ii
+%                fconModel.plot(modelResponseStruct)
+%                fconModel.plot(theInstancePacket.response,'NewWindow',false)
             end
             
-            % if this is the first run/instance, create a plot of the
+            % if this is the first run/instance, add a plot of the
             % available pupil responses across contrast
             if (rr==1 && ii==1)
-                figure; hold on;
+                subplot(ceil(nParams/2),2,nParams+1); hold on;
                 for cc=1:round(length(interpContrastBase)/10):length(interpContrastBase)
-                    grayShade=.1+([cc/length(interpContrastBase) cc/length(interpContrastBase) cc/length(interpContrastBase)].*0.9);
+                    grayShade=0.1+([cc/length(interpContrastBase) cc/length(interpContrastBase) cc/length(interpContrastBase)].*0.9);
                     subclassParams=fcon.defaultParams;
                     subclassParams.paramMainMatrix = paramLookUpMatrix(:,cc)';
                     tpupResponseStruct = fcon.modelObjHandle.computeResponse(subclassParams,theInstancePacket.stimulus,[],'AddNoise',false);
