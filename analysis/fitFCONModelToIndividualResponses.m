@@ -1,4 +1,4 @@
-function [myResultsVariable] = fitFCONModelToIndividualResponses(mergedPacketCellArray, twoComponentFitToData)
+function [myResultsVariable] = fitFCONModelToIndividualResponses(mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir)
 % function [myResultsVariable] = fitFCONModelToIndividualResponses(mergedPacketCellArray, twoComponentFitToData)
 %
 % This routine implements an effective contrast (FCON) model fit to the
@@ -44,12 +44,19 @@ function [myResultsVariable] = fitFCONModelToIndividualResponses(mergedPacketCel
 
 %% SETUP
 
+% Assign a name for this sub-analysis directory for saving plots and fits
+subAnalysisDirectory='fitFCONModelToIndividualResponses';
+outDir = fullfile(dropboxAnalysisDir,subAnalysisDirectory);
+if ~exist(outDir, 'dir')
+    mkdir(outDir);
+end
+
 % Define the split params - These parameters define how single instances of
 % response data are to be split off of the larger packet that contains the
 % response data from a scanning run.
 splitParams.instanceIndex=[]; % will hold the instance index, added later
 splitParams.splitDurationMsecs=13000; % Grab 13 second windows
-splitParams.normFlag=3; % zero center the initial period, change units
+splitParams.normFlag=3; % zero center the initial period, pct. change units
 splitParams.normalizationWindowMsecs=100; % define the size of the norm window
 
 % Instantiate the TPUP model - This will later be sent to FCON to use as a
@@ -113,8 +120,7 @@ for ss=1:nSessions
     % the different tpup parameter types. As we go, we plot the results in
     % a display figure so that we can evaluate the quality of the
     % interpolation.
-    figure
-    set(gcf,'name',['Session_' strtrim(num2str(ss))],'numbertitle','off')
+    figHandle=figure('Name',['Session_' strtrim(num2str(ss))],'NumberTitle','off');
     fitTypes={'nearestinterp','nearestinterp','exp1',...
         'nearestinterp','exp1','nearestinterp','nearestinterp'};
     
@@ -179,7 +185,7 @@ for ss=1:nSessions
             theInstancePacket.stimulus.fcon=fcon;
             
             % perform the fit
-            [paramsFit,fVal,modelResponseStruct] = ...
+            [paramsFit, ~, ~] = ...
                 fconModel.fitResponse(theInstancePacket, ...
                 'defaultParamsInfo', defaultParamsInfo, ...
                 'DiffMinChange', DiffMinChange);
@@ -191,9 +197,8 @@ for ss=1:nSessions
             % parameter space, report this. Shouldn't happen.
             if (myResultsVariable(ss,rr,ii) < min(log10(interpContrastBase)) || ...
                     myResultsVariable(ss,rr,ii) > max(log10(interpContrastBase)) )
-                warningText=['Hit effective contrast boundary'];
+                warningText=['Hit effective contrast boundary (ss-rr-ii): ' strtrim(num2str(ss)) '-' strtrim(num2str(rr)) '-' strtrim(num2str(ii)) ];
                 warning(warningText);
-                ss,rr,ii
             end
             
             % If this is the first run/instance, add a plot of the
@@ -213,6 +218,16 @@ for ss=1:nSessions
             
         end % loop over instances
     end % loop over runs
+    
+    % Save the parameter and simulated pupil response figure
+    plotFileName=fullfile(dropboxAnalysisDir, subAnalysisDirectory, ['InterpParamsAndResponses_Sess' strtrim(num2str(ss)) '.pdf']);
+    saveas(figHandle, plotFileName, 'pdf');
+    close(figHandle);
+    
 end % loop over sessions
+
+% Save the fit values
+dataFileName=fullfile(dropboxAnalysisDir, subAnalysisDirectory, ['effectiveContrast_SessxRunxEvent' '.mat']);
+save(dataFileName,'myResultsVariable');
 
 end % function
