@@ -1,23 +1,4 @@
-function [theResult] = fitIAMPModelToIndividualResponse(mergedPackets)
-
-% Loop across stimulus types (contrast level)
-
-% Build a single packet container
-% the appropriate stim type
-% the kernel (which is the average response across trials for that stim
-% type, available in average packets)
-
-% Loop over stimulus instances
-% place the response into the packet
-% perform the model fit
-% record the amplitude
-% record the intial value of the response
-
-% Loop structure
-%  sessions
-%    stimTypes (contrast levels plus attention task)
-%       [make a packet that has a given stimulus profile and kernel]
-%        instances / events
+function [theResult] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, avgPackets)
 
 
 normalizationTimeSecs = 0.1;
@@ -27,36 +8,44 @@ extractionDurInd = extractionTimeSecs*1000-1;
 
 subjectKey = {'HERO_asb1';	'HERO_aso1';	'HERO_gka1';	'HERO_mxs1';	'HERO_asb1';	'HERO_aso1';	'HERO_gka1';	'HERO_mxs1'};
 projectKey = {'LMS'; 'LMS'; 'LMS'; 'LMS'; 'Melanopsin'; 'Melanopsin';	'Melanopsin';	'Melanopsin'};
-
-
-
-
-% wanted to have a modified accumStimTypesResp that had data in it's native
-% units (diameter, mm) and that began each trial at 0. Make an
-% accumStimTypesResp for both filtered and unfiltered data.
-
 filterStatus = {'unfiltered' 'filtered'};
-accumStimTypes{1} = [];
-accumStimTypes{2} = [];
+
+% define the split params
+splitParams.instanceIndex=[]; % will hold the instance index
+splitParams.splitDurationMsecs=13000; % Grab 13 second windows
+splitParams.normFlag=2; % zero center the initial period, change units
+splitParams.normalizationWindowMsecs=100; % define the size of the norm window
+
+% Define a parameter lock matrix, which in this case is empty
+paramLockMatrix = [];
+IAMPFitToData = [];
+
+% We will fit each average response as a single stimulus in a packet, so
+% each packet therefore contains a single stimulus instance.
+defaultParamsInfo.nInstances = 1;
+
+
+% Construct the model object
+temporalFit = tfeIAMP('verbosity','none');
+
+% Announce what we are about to do
+fprintf('>> Fitting individual amplitude model to data (IAMP)\n');
+
+
+beta{1} = [];
+beta{2} = [];
+
 baselineSizeCombined{1} = [];
 baselineSizeCombined{2} = [];
-baselineSizeCombined{3} = [];
 
-for ff = 1:length(filterStatus);
-    accumStimTypesRespRaw = [];
-    for ss = 1:length(mergedPackets);
-        % update process
-        fprintf('>> Processing session <strong>%g</strong>\n', ss);
-        % create average run from all contrasts levels to be used as a model
-        
-        
-        % create matrices to store results
-        accumStimTypesRespRaw{ss, 1} = [];
-        accumStimTypesRespRaw{ss, 2} = [];
-        accumStimTypesRespRaw{ss, 3} = [];
-        accumStimTypesRespRaw{ss, 4} = [];
-        accumStimTypesRespRaw{ss, 5} = [];
-        accumStimTypesRespRaw{ss, 6} = [];
+for ff = 1:length(filterStatus); % loop over all data filtered, then not filtered
+    for ss = 1:size(mergedPacketCellArray,2); % Looping over subjects
+        betaPerAmplitude{ss,1} = [];
+        betaPerAmplitude{ss,2} = [];
+        betaPerAmplitude{ss,3} = [];
+        betaPerAmplitude{ss,4} = [];
+        betaPerAmplitude{ss,5} = [];
+        betaPerAmplitude{ss,6} = [];
         
         baselineSize{ss, 1} = [];
         baselineSize{ss, 2} = [];
@@ -70,160 +59,56 @@ for ff = 1:length(filterStatus);
         baselineSize_lowFreq{ss, 4} = [];
         baselineSize_lowFreq{ss, 5} = [];
         baselineSize_lowFreq{ss, 6} = [];
-        
-        NRunsTotal = length(mergedPackets{ss});
-        
-        % make a model for each contrast level. avgPackets doesn't quite get
-        % what we want for two reasons: it's shape will be based on percent
-        % amplitude change, and a given run's starting point is not 0
-        
-        
-        
-        % loop over runs
-        for ii = 1:NRunsTotal
-            fprintf('\t* Run <strong>%g</strong> / <strong>%g</strong>\n', ii, NRunsTotal);
-            % Find the stimulus onsets so that we can align the data to it. We
-            % do that by finding a [0 1] edge from a difference operator.
-            tmp = sum(mergedPackets{ss}{ii}.stimulus.values);
-            tmp2 = diff(tmp);
-            tmp2(tmp2 < 0) = 0;
-            tmp2(tmp2 > 0) = 1;
-            stimOnsets = strfind(tmp2, [0 1]);
-            
-            % Get the number of segments from the stimulus onsets
-            NSegments = length(stimOnsets);
-            
-            t = (0:extractionDurInd)/1000; % tells how long each stimulus should be, based on information specified in MelanopsinMR_PupilAnalysis
-            
-            % loop over individual stimuli
-            for jj = 1:length(stimOnsets)
-                
-                % figure out temporal boundaries of pupil response, adjusting
-                %  if stimulus happens near the end of the run
-                if (stimOnsets(jj)+extractionDurInd) <= length(mergedPackets{ss}{ii}.response.values);
-                    idxToExtract = stimOnsets(jj):(stimOnsets(jj)+extractionDurInd);
-                else
-                    idxToExtract = stimOnsets(jj):length(mergedPackets{ss}{ii}.response.values);
-                end
-                thisPacket.packetType = 'pupil';
-                thisPacket.stimulusFile = mergedPackets{ss}{ii}.metaData.stimulusFile;
-                thisPacket.responseFile = mergedPackets{ss}{ii}.metaData.responseFile;
-                
-                 % for storing data, identify which type of contrast was
-                % associated with the stimulus
-                contrast = mergedPackets{ss}{ii}.stimulus.metaData.stimTypes(jj);
-                
-                
-                % based on timing information, actually grab pupil
-                % response. again, the actual data we're going to be
-                % grabbing depends if we want the filtered or unfiltered
-                % stuff
-                if strcmp(filterStatus{ff},'unfiltered');
-                    thisPacket.respValues = mergedPackets{ss}{ii}.response.values(idxToExtract);
-                    accumStimTypesRespRaw{ss,contrast} = [accumStimTypesRespRaw{ss,contrast}; (thisPacket.respValues - mergedPackets{ss}{ii}.response.values(stimOnsets(jj)))];
-                end
-                if strcmp(filterStatus{ff},'filtered');
-                    thisPacket.respValues = mergedPackets{ss}{ii}.response.values(idxToExtract) - mergedPackets{ss}{ii}.response.metaData.lowFreqComponent(idxToExtract);
-                    accumStimTypesRespRaw{ss,contrast} = [accumStimTypesRespRaw{ss,contrast}; (thisPacket.respValues - thisPacket.respValues(1))];
-                end
-                
-                % while we're at it, also grab the baseline size. again one
-                % set of values for no filtering, one set of values with
-                % filtering
-                
-                if strcmp(filterStatus{ff},'unfiltered');
-                    sizeMean = nanmean(mergedPackets{ss}{ii}.response.values);
-                    baselineSize{ss,contrast} = [baselineSize{ss, contrast} mergedPackets{1,ss}{1,ii}.response.values(1,stimOnsets(jj))];
-                end
-                if strcmp(filterStatus{ff},'filtered');
-                    sizeMean = nanmean(mergedPackets{ss}{ii}.response.metaData.lowFreqComponent);
-                    baselineSize{ss,contrast} = [baselineSize{ss, contrast} (mergedPackets{1,ss}{1,ii}.response.values(1,stimOnsets(jj))-mergedPackets{1,ss}{1,ii}.response.metaData.lowFreqComponent(1,stimOnsets(jj)))];
-                    baselineSize_lowFreq{ss,contrast} = [baselineSize_lowFreq{ss, contrast} mergedPackets{1,ss}{1,ii}.response.metaData.lowFreqComponent(1,stimOnsets(jj))];
-                end
-         
-                
-                
-               
-                
-                % make new dataBin for data that has following properties: data
-                % from raw data in pupil diameter (mm) (not percent change),
-                % and each response starts from 0
-              
-                
-            end % end loop over stimuli per run
-        end % end loop over runs
-    end % end loop over subjects/sessions
-    accumStimTypes{1,ff} = accumStimTypesRespRaw;
-    baselineSizeCombined{1,ff} = baselineSize;
-    baselineSizeCombined{1,3} = baselineSize_lowFreq;
-end % end loop over filter status
-
-% Define a parameter lock matrix, which in this case is empty
-paramLockMatrix = [];
-IAMPFitToData = [];
-
-% We will fit each average response as a single stimulus in a packet, so
-% each packet therefore contains a single stimulus instance.
-defaultParamsInfo.nInstances = 1;
-
-% Construct the model object
-temporalFit = tfeIAMP('verbosity','none');
-
-% Announce what we are about to do
-fprintf('>> Fitting individual amplitude model to data (IAMP)\n');
-
-
-beta{1} = [];
-beta{2} = [];
-
-baseline{1} = [];
-
-for ff = 1:length(filterStatus); % loop over all data filtered, then not filtered
-    for ss = 1:size(accumStimTypesRespRaw,1); % Looping over subjects
-        betaPerAmplitude{ss,1} = [];
-        betaPerAmplitude{ss,2} = [];
-        betaPerAmplitude{ss,3} = [];
-        betaPerAmplitude{ss,4} = [];
-        betaPerAmplitude{ss,5} = [];
-        betaPerAmplitude{ss,6} = [];
       
-        for cc = 1:(size(accumStimTypesRespRaw,2)) % Looping over stimulus types
+        for rr = 1:(size(mergedPacketCellArray{ss},2)) % Looping over runs
             % Update the user
-            fprintf('* Subject <strong>%g</strong>, Contrast <strong>%g</strong> of <strong>%g</strong>', ss, cc, 6);
+            fprintf('* Subject <strong>%g</strong>, Run <strong>%g</strong> of <strong>%g</strong>', ss, rr, size(mergedPacketCellArray{ss},2));
             fprintf('\n');
             
-            % allocate room for results
+            
+            % grab a packet that corresponds to a run for a given subject
+            theRunPacket=mergedPacketCellArray{1,ss}{rr};
             
             
-            % Update the packet to have current kernel and stimulus profile
-            % Note that the kernel should be scaled to have a unit excursion
             
-            singlePacket.stimulus.values = zeros(1,13000);  % blip to be convolved with kernel; fixed per subject per contrast
-            singlePacket.stimulus.values(1,1) = 1;
-            singlePacket.stimulus.timebase = [0:12999];
-            singlePacket.kernel.values = nanmean(accumStimTypesRespRaw{ss,cc});
-            singlePacket.kernel.values = singlePacket.kernel.values/(abs(min(singlePacket.kernel.values))); % the average of runs of a given contrast level; fixed per subject per contrast
-            if strcmp(cc, 6);
-               singlePacket.kernel.values = singlePacket.kernel.values/(abs(max(singlePacket.kernel.values))); % the average of runs of a given contrast level; fixed per subject per contrast
-            end
-            singlePacket.kernel.timebase = [0:12999];
-            singlePacket.response.values = []; % to be filled in for each individual trial
-            singlePacket.response.timebase = [0:12999];
-            singlePacket.metaData = mergedPackets{1,ss}{1,1}.metaData; % steals from one of the runs of the same subject
             
             
             % Loop over instances / events
-            for ii = 1:size(accumStimTypes{ff}{ss,cc},1)
+            for ii = 1:size(mergedPacketCellArray{ss}{rr}.stimulus.values,1)
                 
-                % Update the packet to have the response values for this
-                % event. Respones values correspond to either filtered or
-                % unfiltered data
-                if strcmp(filterStatus{ff}, 'unfiltered') == 1;
-                    singlePacket.response.values = accumStimTypes{1}{ss,cc}(ii,:);
+                % Update user about instance
+                fprintf('***Instance <strong>%g</strong> of <strong>%g</strong>', ii, size(mergedPacketCellArray{ss}{rr}.stimulus.values,1));
+                fprintf('\n');
+                
+                % update the splitParams with the instance index
+                splitParams.instanceIndex = ii;
+            
+                % grab the packet for this particular instance
+                singlePacket=splitOffAnInstancePacket(theRunPacket,splitParams);
+                
+                % identify contrast associated with that instance
+                contrast = theRunPacket.stimulus.metaData.stimTypes(ii);
+              
+                % create kernel, which is the average run for a contrast
+                % level per subject
+                singlePacket.kernel.values = avgPackets{ss,contrast}.response.values;
+                singlePacket.kernel.values = singlePacket.kernel.values/(abs(min(singlePacket.kernel.values))); % the average of runs of a given contrast level; fixed per subject per contrast
+                if strcmp(contrast, 6);
+                    singlePacket.kernel.values = singlePacket.kernel.values/(abs(max(singlePacket.kernel.values))); % the average of runs of a given contrast level; fixed per subject per contrast
                 end
-                if strcmp(filterStatus{ff}, 'filtered') == 1;
-                    singlePacket.response.values = accumStimTypes{2}{ss,cc}(ii,:);
+                singlePacket.kernel.timebase = [0:12999];
+                
+                % determine baseline size
+                 if strcmp(filterStatus{ff},'unfiltered');
+                    sizeMean = nanmean(theRunPacket.response.values);
+                    baselineSize{ss,contrast} = [baselineSize{ss, contrast} theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)];
                 end
+                if strcmp(filterStatus{ff},'filtered');
+                    sizeMean = nanmean(theRunPacket.response.metaData.lowFreqComponent);
+                    baselineSize{ss,contrast} = [baselineSize{ss, contrast} (theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)-theRunPacket.response.metaData.lowFreqComponent(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs))];
+                    baselineSize_lowFreq{ss,contrast} = [baselineSize_lowFreq{ss, contrast} theRunPacket.response.metaData.lowFreqComponent(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)];
+                end
+                
                 % Conduct the fit
                 [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix);
                 
@@ -231,10 +116,10 @@ for ff = 1:length(filterStatus); % loop over all data filtered, then not filtere
                 % Save the paramsFit. You'll discover that this is a structure,
                 % with one field being "amplitude". Save the value associated with
                 % that.
-                IAMPFitToData{ss,cc}{1,ii}.paramsFit=paramsFit;
-                IAMPFitToData{ss,cc}{1,ii}.fVal=fVal;
-                IAMPFitToData{ss,cc}{1,ii}.modelResponseStruct=modelResponseStruct;
-                betaPerAmplitude{ss,cc} = [betaPerAmplitude{ss,cc} paramsFit.paramMainMatrix];
+                IAMPFitToData{ss,contrast}{1,ii}.paramsFit=paramsFit;
+                IAMPFitToData{ss,contrast}{1,ii}.fVal=fVal;
+                IAMPFitToData{ss,contrast}{1,ii}.modelResponseStruct=modelResponseStruct;
+                betaPerAmplitude{ss,contrast} = [betaPerAmplitude{ss,contrast} paramsFit.paramMainMatrix];
                 
                 
             end % loop over events
@@ -242,6 +127,10 @@ for ff = 1:length(filterStatus); % loop over all data filtered, then not filtere
     end % loop over sessions
     
     beta{ff} = betaPerAmplitude;
+    
+    baselineSizeCombined{1,ff} = baselineSize;
+    baselineSizeCombined{1,3} = baselineSize_lowFreq;
+    
 end % loop over filter status
 
 % Clear the object
