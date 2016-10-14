@@ -66,20 +66,15 @@ for ff = 1:length(filterStatus); % loop over all data filtered, then not filtere
             fprintf('* Subject <strong>%g</strong>, Run <strong>%g</strong> of <strong>%g</strong>', ss, rr, size(mergedPacketCellArray{ss},2));
             fprintf('\n');
             
-            
             % grab a packet that corresponds to a run for a given subject
             theRunPacket=mergedPacketCellArray{1,ss}{rr};
-            
-            
-            
-            
             
             % Loop over instances / events
             for ii = 1:size(mergedPacketCellArray{ss}{rr}.stimulus.values,1)
                 
                 % Update user about instance
-                fprintf('***Instance <strong>%g</strong> of <strong>%g</strong>', ii, size(mergedPacketCellArray{ss}{rr}.stimulus.values,1));
-                fprintf('\n');
+%                fprintf('***Instance <strong>%g</strong> of <strong>%g</strong>', ii, size(mergedPacketCellArray{ss}{rr}.stimulus.values,1));
+%                fprintf('\n');
                 
                 % update the splitParams with the instance index
                 splitParams.instanceIndex = ii;
