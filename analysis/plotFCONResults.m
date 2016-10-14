@@ -1,4 +1,7 @@
-%function [theResult] = plotFCONResults(mergedPacketCellArray)
+function [theResult] = plotFCONResults(mergedPacketCellArray, dropboxAnalysisDir)
+
+
+subAnalysisDirectory='fitFCONModelToIndividualResponses';
 
 effectiveContrast_sessxrunxevent = load('~/Dropbox-Aguirre-Brainard-Lab/MELA_analysis/pupilMelanopsinMRIAnalysis/fitFCONModelToIndividualResponses/effectiveContrast_sessxrunxevent.mat');
 myResultsVariable = effectiveContrast_sessxrunxevent.myResultsVariable;
@@ -44,7 +47,7 @@ hold on
 set(gca,'Xtick',[25 50 100 200 400],'XTickLabel',{'25%', '50%', '100%', '200%', '400%'})
 ylim([0 600])
 xlim([0 450])
-xlabel('Administered Contrast')
+xlabel('Presented Contrast')
 ylabel('Effective Contrast')   
 unity=plot([0:600],[0:600], ':');
 
@@ -83,5 +86,12 @@ for ss = 1:size(mergedPacketCellArray,2);
 end
 
 legend([unity lms mel], 'Unity', 'LMS', 'Melanopsin', 'Location', 'northwest');
+outDir = fullfile(dropboxAnalysisDir,subAnalysisDirectory);
+if ~exist(outDir, 'dir')
+    mkdir(outDir);
+end
+saveas(plotFig, fullfile(outDir, 'effectiveContrastByPresentedContrast.png'), 'png');
+close(plotFig);
  
 
+end
