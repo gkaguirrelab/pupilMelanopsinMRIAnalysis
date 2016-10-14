@@ -1,0 +1,16 @@
+function [theResult] = plotFCONResults(mergedPacketCellArray)
+
+effectiveContrast_sessxrunxevent = load('~/Dropbox-Aguirre-Brainard-Lab/MELA_analysis/pupilMelanopsinMRIAnalysis/fitFCONModelToIndividualResponses/effectiveContrast_sessxrunxevent.mat');
+myResultsVariable = effectiveContrast_sessxrunxevent.myResultsVariable;
+
+for for ss = 1:size(mergedPacketCellArray,2); % loop over subjects
+    for rr = 1:size(mergedPacketCellArray{ss},2); % loop over runs
+
+    
+end
+
+
+
+
+% do each session separately
+% plot mean and SEM across contrast level

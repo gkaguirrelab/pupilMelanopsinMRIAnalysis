@@ -9,6 +9,12 @@ normalizationDurInd = normalizationTimeSecs*1000-1;
 extractionTimeSecs = 13;
 extractionDurInd = extractionTimeSecs*1000-1;
 
+% define the split params
+splitParams.instanceIndex=[]; % will hold the instance index
+splitParams.splitDurationMsecs=13000; % Grab 13 second windows
+splitParams.normFlag=2; % zero center the initial period, change units
+splitParams.normalizationWindowMsecs=100; % define the size of the norm window
+
 NSessionsMerged=size(mergedPacketCellArray,2);
 
 %% Assemble the different stimTypes
@@ -21,42 +27,21 @@ for ss = 1:NSessionsMerged
     end
     
     NRunsTotal = length(mergedPacketCellArray{ss});
-    for ii = 1:NRunsTotal
-        % Find the stimulus onsets so that we can align the data to it. We
-        % do that by finding a [0 1] edge from a difference operator.
-        tmp = sum(mergedPacketCellArray{ss}{ii}.stimulus.values);
-        tmp2 = diff(tmp);
-        tmp2(tmp2 < 0) = 0;
-        tmp2(tmp2 > 0) = 1;
-        stimOnsets = strfind(tmp2, [0 1]);
+    for rr = 1:NRunsTotal
         
-        % Get the number of segments from the stimulus onsets
-        NSegments = length(stimOnsets);
-        t = (0:extractionDurInd)/1000;
-        for jj = 1:length(stimOnsets)
-            if (stimOnsets(jj)+extractionDurInd) <= length(mergedPacketCellArray{ss}{ii}.response.values)
-                idxToExtract = stimOnsets(jj):(stimOnsets(jj)+extractionDurInd);
-            else
-                idxToExtract = stimOnsets(jj):length(mergedPacketCellArray{ss}{ii}.response.values);
-            end
-            thisPacket.packetType = 'pupil';
-            thisPacket.stimulusFile = mergedPacketCellArray{ss}{ii}.metaData.stimulusFile;
-            thisPacket.responseFile = mergedPacketCellArray{ss}{ii}.metaData.responseFile;
-            thisPacket.respValues = mergedPacketCellArray{ss}{ii}.response.values(idxToExtract);
-            % Normalize the pupil data
-            thisPacket.respValues = (thisPacket.respValues - nanmean(thisPacket.respValues(1:normalizationDurInd)))./nanmean(thisPacket.respValues(1:normalizationDurInd));
-            thisPacket.respTimeBase = mergedPacketCellArray{ss}{ii}.response.timebase(idxToExtract);
-            thisPacket.respTimeBase = thisPacket.respTimeBase-thisPacket.respTimeBase(1);
-            thisPacket.stimValues = mergedPacketCellArray{ss}{ii}.stimulus.values(jj, idxToExtract);
-            thisPacket.stimTimeBase = mergedPacketCellArray{ss}{ii}.stimulus.timebase(idxToExtract);
-            thisPacket.stimTimeBase =  thisPacket.stimTimeBase - thisPacket.stimTimeBase(1);
-            thisPacket.stimMetaData.stimTypes = mergedPacketCellArray{ss}{ii}.stimulus.metaData.stimTypes(jj);
-            thisPacket.stimMetaData.stimLabels = mergedPacketCellArray{ss}{ii}.stimulus.metaData.stimLabels;
+        % grab a packet that corresponds to a run for a given subject
+        theRunPacket=mergedPacketCellArray{1,ss}{rr};
+        
+        for ii = 1:size(mergedPacketCellArray{ss}{rr}.stimulus.values,1)
+            splitParams.instanceIndex = ii;
             
-            % Could make packets here for each event, but not doing it...
-            % Just making the 'accumStimTypes' variable for now.
-            accumStimTypesResp{ss, thisPacket.stimMetaData.stimTypes} = [accumStimTypesResp{ss, thisPacket.stimMetaData.stimTypes} ; thisPacket.respValues];
-            accumStimTypesStim{ss, thisPacket.stimMetaData.stimTypes} = [accumStimTypesStim{ss, thisPacket.stimMetaData.stimTypes} ; thisPacket.stimValues];
+            % grab the packet for this particular instance
+            singlePacket=splitOffAnInstancePacket(theRunPacket,splitParams);
+            
+            % identify contrast associated with that instance
+            contrast = theRunPacket.stimulus.metaData.stimTypes(ii);
+            accumStimTypesResp{ss, contrast} = [accumStimTypesResp{ss, contrast} ; singlePacket.response.values];
+            accumStimTypesStim{ss, contrast} = [accumStimTypesStim{ss, contrast} ; singlePacket.stimulus.values];
         end
     end
 end
@@ -70,13 +55,11 @@ for ss = 1:NSessionsMerged
         thisPacket.stimulusFile = mergedPacketCellArray{ss}{1}.metaData.stimulusFile;
         thisPacket.responseFile = mergedPacketCellArray{ss}{1}.metaData.responseFile;
         thisPacket.respValues =  nanmean(accumStimTypesResp{ss, mm});
-        thisPacket.respTimeBase = mergedPacketCellArray{ss}{1}.response.timebase(idxToExtract);
-        thisPacket.respTimeBase = thisPacket.respTimeBase-thisPacket.respTimeBase(1);
+        thisPacket.respTimeBase = [0:12999];
         thisPacket.stimValues = max(accumStimTypesStim{ss, mm});
-        thisPacket.stimTimeBase = mergedPacketCellArray{ss}{1}.stimulus.timebase(idxToExtract);
-        thisPacket.stimTimeBase = thisPacket.stimTimeBase-thisPacket.stimTimeBase(1);
-        thisPacket.stimMetaData.stimTypes = mergedPacketCellArray{ss}{ii}.stimulus.metaData.stimTypes(jj);
-        thisPacket.stimMetaData.stimLabels = mergedPacketCellArray{ss}{ii}.stimulus.metaData.stimLabels;
+        thisPacket.stimTimeBase = [0:12999];
+        thisPacket.stimMetaData.stimTypes = mergedPacketCellArray{ss}{1}.stimulus.metaData.stimTypes;
+        thisPacket.stimMetaData.stimLabels = mergedPacketCellArray{ss}{1}.stimulus.metaData.stimLabels;
         avgPackets{ss, mm} = makePacket(thisPacket);
     end
 end
