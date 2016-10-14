@@ -62,7 +62,7 @@ twoComponentFitToData = ...
 
 %% Fit IAMP model to individual events
 fprintf('>> Fitting IAMP model to individual responses\n');
-[~] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, avgPackets);
+[~] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, avgPackets, dropboxAnalysisDir);
 
 %% Fit FCON model to individual events
 [myResultsVariable] = ...

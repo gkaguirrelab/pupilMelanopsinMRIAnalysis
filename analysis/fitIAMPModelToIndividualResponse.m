@@ -1,5 +1,6 @@
-function [theResult] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, avgPackets)
+function [theResult] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, avgPackets, dropboxAnalysisDir)
 
+subAnalysisDirectory='fitIAMPModelToAverageResponse';
 
 normalizationTimeSecs = 0.1;
 normalizationDurInd = normalizationTimeSecs*1000-1;
@@ -267,6 +268,11 @@ for s = subjectsLMS;
         plot(fittedX, fittedY, 'LineWidth', 3, 'Color', colorList(c))
     end
 end
+outDir = fullfile(dropboxAnalysisDir,subAnalysisDirectory);
+if ~exist(outDir, 'dir')
+    mkdir(outDir);
+end
+saveas(plotFig, fullfile(outDir, 'baselineSizeByAmplitude_filtered_LMS.png'), 'png');
 
 % now plotting the Melanopsin subjects
 f = 2; % we're plotting only the data that has the low frequency component removed
@@ -345,9 +351,17 @@ for s = subjectsMel;
     end
 end
 
+outDir = fullfile(dropboxAnalysisDir,subAnalysisDirectory);
+if ~exist(outDir, 'dir')
+    mkdir(outDir);
+end
+saveas(plotFig, fullfile(outDir, 'baselineSizeByAmplitude_filtered_Mel.png'), 'png');
+close(plotFig);
 
-fprintf('The pupil response to a given light stimulus is related to the contrast of the light stimulus; more contrast \nevokes a larger constriction.\n\n')
-fprintf('Baseline pupil size can also predict amplitude of the pupil response to a light stimulus. More precisely, \nsmaller pupils contract less to a light stimulus. If the baseline pupil size and amplitude of pupil \nresponse are related by some slope, the effect of increasing contrast appears to be increasing the \nmagnitude of the slope.\n\n')
-fprintf('The relationship between baseline pupil size and amplitude of the pupil response to light is much stronger \non pupil data that has the low frequency component removed. One possible model for this observation \nis that two independent processes contribute to determining pupil size, a slow wave component and a \ncomponent that determines pupil size as a function of irradiance. When the brain decides how much to \nrespond to a brief flash of light, it scales the degree of response by how big the pupil should as determined \nby irradiance, not actual pupil size.\n')
+fileID = fopen([outDir '/summaryText.txt'],'w');
+fprintf(fileID, 'The pupil response to a given light stimulus is related to the contrast of the light stimulus; more contrast \nevokes a larger constriction.\n\n');
+fprintf(fileID, 'Baseline pupil size can also predict amplitude of the pupil response to a light stimulus. More precisely, \nsmaller pupils contract less to a light stimulus. If the baseline pupil size and amplitude of pupil \nresponse are related by some slope, the effect of increasing contrast appears to be increasing the \nmagnitude of the slope.\n\n');
+fprintf(fileID, 'The relationship between baseline pupil size and amplitude of the pupil response to light is much stronger \non pupil data that has the low frequency component removed. One possible model for this observation \nis that two independent processes contribute to determining pupil size, a slow wave component and a \ncomponent that determines pupil size as a function of irradiance. When the brain decides how much to \nrespond to a brief flash of light, it scales the degree of response by how big the pupil should as determined \nby irradiance, not actual pupil size.\n');
+fclose(fileID);
 
 end % function
