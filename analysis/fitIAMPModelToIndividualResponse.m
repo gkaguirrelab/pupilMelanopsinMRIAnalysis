@@ -273,6 +273,7 @@ if ~exist(outDir, 'dir')
     mkdir(outDir);
 end
 saveas(plotFig, fullfile(outDir, 'baselineSizeByAmplitude_filtered_LMS.png'), 'png');
+close(plotFig);
 
 % now plotting the Melanopsin subjects
 f = 2; % we're plotting only the data that has the low frequency component removed
