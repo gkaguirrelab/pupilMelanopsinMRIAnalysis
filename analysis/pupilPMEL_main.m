@@ -50,19 +50,19 @@ switch packetCacheBehavior
         error('Please define a legal packetCacheBehavior');
 end
 
-%% Obtain the responses
+%% Obtain the average responses
 fprintf('>> Making average responses\n');
 [ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray );
+
+%% Fit IAMP model to individual events
+fprintf('>> Fitting IAMP model to individual responses\n');
+[~] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, avgPackets, dropboxAnalysisDir);
 
 %% Fit model to avg packets
 twoComponentFitToData = ...
     fitTPUPModelToAverageResponse(avgPackets, ...
     mergedPacketCellArray, ...
     dropboxAnalysisDir);
-
-%% Fit IAMP model to individual events
-fprintf('>> Fitting IAMP model to individual responses\n');
-[~] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, avgPackets, dropboxAnalysisDir);
 
 %% Fit FCON model to individual events
 [myResultsVariable] = ...
