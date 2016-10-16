@@ -230,11 +230,12 @@ for ss=1:nSessions
         
         % Plot the data and fit for this run
         figure(figRunFitHandle);
-        subplot(nRuns,1,rr);
-        plot(theRunPacket.response.timebase,theRunPacket.response.values,'-b');
-        hold on;
+        subplot(ceil(nRuns/2),2,rr); hold on;
         meanPupilRunResponse=nanmean(theRunPacket.response.values);
-        plot(theRunPacket.stimulus.timebase,modelRunResponse+meanPupilRunResponse,'-r');
+        normedPupilRunResponse=...
+            (theRunPacket.response.values-meanPupilRunResponse)/meanPupilRunResponse;
+        plot(theRunPacket.response.timebase,normedPupilRunResponse,'-k');
+        plot(theRunPacket.stimulus.timebase,modelRunResponse,'-r');
         hold off;
         
     end % loop over runs
@@ -246,8 +247,8 @@ for ss=1:nSessions
 
     % Save the run time-series fits
     plotFileName=fullfile(dropboxAnalysisDir, subAnalysisDirectory, ['RunFits_Sess' strtrim(num2str(ss)) '.pdf']);
-    saveas(figParamHandle, plotFileName, 'pdf');
-    close(figParamHandle);
+    saveas(figRunFitHandle, plotFileName, 'pdf');
+    close(figRunFitHandle);
 
 end % loop over sessions
 

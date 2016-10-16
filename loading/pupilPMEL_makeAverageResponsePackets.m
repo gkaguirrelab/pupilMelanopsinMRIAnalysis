@@ -1,67 +1,66 @@
-function [ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray )
+function [ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray, normFlag )
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
 
-% Set some parameters we need
-normalizationTimeSecs = 0.1;
-normalizationDurInd = normalizationTimeSecs*1000-1;
-extractionTimeSecs = 13;
-extractionDurInd = extractionTimeSecs*1000-1;
-
 % define the split params
 splitParams.instanceIndex=[]; % will hold the instance index
 splitParams.splitDurationMsecs=13000; % Grab 13 second windows
-splitParams.normFlag=2; % zero center the initial period, change units
+splitParams.normFlag=normFlag; % zero center the initial period, % change units
 splitParams.normalizationWindowMsecs=100; % define the size of the norm window
 
-NSessionsMerged=size(mergedPacketCellArray,2);
+NStimTypes=6;
 
-%% Assemble the different stimTypes
-for ss = 1:NSessionsMerged
-    % Make an 'accumulator'
-    NStimTypes = 6;
-    for mm = 1:NStimTypes
-        accumStimTypesResp{ss, mm} = [];
-        accumStimTypesStim{ss, mm} = [];
-    end
-    
-    NRunsTotal = length(mergedPacketCellArray{ss});
-    for rr = 1:NRunsTotal
+%% Loop through the sessions
+NSessions=size(mergedPacketCellArray,2);
+
+% pre-allocate the avgPackets cell array
+avgPackets=cell(NSessions,NStimTypes);
+
+for ss = 1:NSessions
+
+    NRuns=size(mergedPacketCellArray{ss},2);
+
+    for rr = 1:NRuns
         
         % grab a packet that corresponds to a run for a given subject
-        theRunPacket=mergedPacketCellArray{1,ss}{rr};
+        theRunPacket=mergedPacketCellArray{ss}{rr};
         
-        for ii = 1:size(mergedPacketCellArray{ss}{rr}.stimulus.values,1)
+        for ii = 1:size(theRunPacket.stimulus.values,1)
+            
+            % Put the instance index into the splitParams
             splitParams.instanceIndex = ii;
             
             % grab the packet for this particular instance
             singlePacket=splitOffAnInstancePacket(theRunPacket,splitParams);
             
-            % identify contrast associated with that instance
-            contrast = theRunPacket.stimulus.metaData.stimTypes(ii);
-            accumStimTypesResp{ss, contrast} = [accumStimTypesResp{ss, contrast} ; singlePacket.response.values];
-            accumStimTypesStim{ss, contrast} = [accumStimTypesStim{ss, contrast} ; singlePacket.stimulus.values];
-        end
-    end
-end
+            % identify the stim type for this instance
+            thisStimType = theRunPacket.stimulus.metaData.stimTypes(ii);
+            
+            % Add to (or create) this stimType in the avgPackets
+            if isempty(avgPackets{ss,thisStimType})
+                avgPackets{ss,thisStimType}=singlePacket;
+                stimTypeCounter(thisStimType)=1;
+            else
+                avgPackets{ss,thisStimType}.response.values= ...
+                    avgPackets{ss,thisStimType}.response.values + singlePacket.response.values;
+                avgPackets{ss,thisStimType}.stimulus.values= ...
+                    avgPackets{ss,thisStimType}.stimulus.values + singlePacket.stimulus.values;
+                stimTypeCounter(thisStimType)=stimTypeCounter(thisStimType)+1;
+            end % check for the existence of this stimType entry
+        end % loop over instances
+    end % loop over runs
+    
+    % Divide each stimulus type by the number of added instances
+    
+    for cc=1:length(stimTypeCounter)
+        if ~stimTypeCounter(cc)==0
+            avgPackets{ss,cc}.response.values = ...
+                avgPackets{ss,cc}.response.values ./ stimTypeCounter(cc);
+            avgPackets{ss,cc}.stimulus.values = ...
+                avgPackets{ss,cc}.stimulus.values ./ stimTypeCounter(cc);
+        end % check that an instances was found
+    end % loop over stimTypes
+end % loop over sessions
 
-%% Make average packets per subject
-for ss = 1:NSessionsMerged
-    for mm = 1:NStimTypes
-        thisPacket = [];
-        thisPacket.packetType = 'pupil';
-        thisPacket.sessionDir = '';
-        thisPacket.stimulusFile = mergedPacketCellArray{ss}{1}.metaData.stimulusFile;
-        thisPacket.responseFile = mergedPacketCellArray{ss}{1}.metaData.responseFile;
-        thisPacket.respValues =  nanmean(accumStimTypesResp{ss, mm});
-        thisPacket.respTimeBase = [0:12999];
-        thisPacket.stimValues = max(accumStimTypesStim{ss, mm});
-        thisPacket.stimTimeBase = [0:12999];
-        thisPacket.stimMetaData.stimTypes = mergedPacketCellArray{ss}{1}.stimulus.metaData.stimTypes;
-        thisPacket.stimMetaData.stimLabels = mergedPacketCellArray{ss}{1}.stimulus.metaData.stimLabels;
-        avgPackets{ss, mm} = makePacket(thisPacket);
-    end
-end
-
-end
+end % function
