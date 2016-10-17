@@ -40,10 +40,10 @@ for ss = 1:NSessionsMerged
 end
 
 %% Plot the across-subject data LMS
-
 sessionTypes={'LMS','Mel'};
 sessionSets=[1 2 3 4; 5 6 7 8];
-sessionTypeColor=[1 0 0; 0 0 1];
+sessionTypeColor(1,:,:)=[0.5 0.5 0.5; 0.625 0.375 0.375; 0.75 0.25 0.25; 0.875 0.125 0.125; 1 0 0];
+sessionTypeColor(2,:,:)=[0.5 0.5 0.5; 0.375 0.375 0.625; 0.25 0.25 0.75; 0.125 0.125 0.875; 0 0 1; ];
 
 for pp=1:length(sessionTypes)
     plotFig = figure;
@@ -58,7 +58,8 @@ for pp=1:length(sessionTypes)
         % Calculate the mean response and plot it
         meanAcrossSubjectResponse=nanmean(acrossSubjectResponseMatrix);
         semAcrossSubjectResponse=nanstd(acrossSubjectResponseMatrix)/sqrt(length(sessionSets(pp,:)));
-        plot(avgPackets{sessionSets(pp,ss),cc}.response.timebase, 100*meanAcrossSubjectResponse,'Color',sessionTypeColor(pp,:));
+        plot(avgPackets{sessionSets(pp,ss),cc}.response.timebase, 100*meanAcrossSubjectResponse,...
+            'LineWidth',3,'Color',sessionTypeColor(pp,cc,:));
     end % loop over stimulus types
 
     % Add the stimulus profile to the plot
@@ -79,7 +80,6 @@ for pp=1:length(sessionTypes)
     close(plotFig);
 
 end % Loop over session sets (Mel and LMS)
-
 
 
 end
