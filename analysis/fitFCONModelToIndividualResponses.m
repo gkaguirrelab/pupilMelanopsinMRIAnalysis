@@ -94,7 +94,6 @@ interpContrastBase = ...
 % fmincon.
 DiffMinChange=mean(diff(log10(interpContrastBase)));
 
-
 %% LOOP OVER SESSIONS
 
 % Announce what we are about to do
@@ -120,7 +119,7 @@ for ss=1:nSessions
     % the different tpup parameter types. As we go, we plot the results in
     % a display figure so that we can evaluate the quality of the
     % interpolation.
-    figHandle=figure('Name',['Session_' strtrim(num2str(ss))],'NumberTitle','off');
+    figParamHandle=figure('Name',['Model params, Session_' strtrim(num2str(ss))],'NumberTitle','off');
     fitTypes={'nearestinterp','nearestinterp','exp1',...
         'nearestinterp','exp1','nearestinterp','nearestinterp'};
     
@@ -153,6 +152,8 @@ for ss=1:nSessions
     
     % Loop over runs
     nRuns=size(mergedPacketCellArray{1,ss},2);
+    figRunFitHandle=figure('Name',['Run Fits, Session_' strtrim(num2str(ss))],'NumberTitle','off');
+
     for rr=1:nRuns
         
         % Update the user on our progress
@@ -167,6 +168,9 @@ for ss=1:nSessions
         lowFreqComponent=lowFreqComponent-mean(lowFreqComponent);
         theRunPacket.response.values = ...
             theRunPacket.response.values - lowFreqComponent;
+        
+        % Pre-allocate a variable to hold the modeled response        
+        modelRunResponse=theRunPacket.stimulus.timebase*0;
         
         % Loop over individual instances
         nInstances=size(theRunPacket.stimulus.values,1);
@@ -185,10 +189,15 @@ for ss=1:nSessions
             theInstancePacket.stimulus.fcon=fcon;
             
             % perform the fit
-            [paramsFit, ~, ~] = ...
+            [paramsFit,fVal,modelResponseStruct] = ...
                 fconModel.fitResponse(theInstancePacket, ...
                 'defaultParamsInfo', defaultParamsInfo, ...
                 'DiffMinChange', DiffMinChange);
+            
+            % Add instance fit to the model response for the run.
+            modelRunResponse(theInstancePacket.stimulus.metaData.idxToExtract) = ...
+                modelRunResponse(theInstancePacket.stimulus.metaData.idxToExtract)+ ...
+                modelResponseStruct.values;
             
             % store the effective contrast from the paramsFit
             myResultsVariable(ss,rr,ii)=paramsFit.paramMainMatrix;
@@ -200,10 +209,11 @@ for ss=1:nSessions
                 warningText=['Hit effective contrast boundary (ss-rr-ii): ' strtrim(num2str(ss)) '-' strtrim(num2str(rr)) '-' strtrim(num2str(ii)) ];
                 warning(warningText);
             end
-            
+                        
             % If this is the first run/instance, add a plot of the
             % available pupil responses across contrast
             if (rr==1 && ii==1)
+                figure(figParamHandle);
                 subplot(ceil(nParams/2),2,nParams+1); hold on
                 title('synthetic pupil responses');
                 for cc=1:round(length(interpContrastBase)/10):length(interpContrastBase)
@@ -217,13 +227,29 @@ for ss=1:nSessions
             end
             
         end % loop over instances
+        
+        % Plot the data and fit for this run
+        figure(figRunFitHandle);
+        subplot(ceil(nRuns/2),2,rr); hold on;
+        meanPupilRunResponse=nanmean(theRunPacket.response.values);
+        normedPupilRunResponse=...
+            (theRunPacket.response.values-meanPupilRunResponse)/meanPupilRunResponse;
+        plot(theRunPacket.response.timebase,normedPupilRunResponse,'-k');
+        plot(theRunPacket.stimulus.timebase,modelRunResponse,'-r');
+        hold off;
+        
     end % loop over runs
     
     % Save the parameter and simulated pupil response figure
     plotFileName=fullfile(dropboxAnalysisDir, subAnalysisDirectory, ['InterpParamsAndResponses_Sess' strtrim(num2str(ss)) '.pdf']);
-    saveas(figHandle, plotFileName, 'pdf');
-    close(figHandle);
-    
+    saveas(figParamHandle, plotFileName, 'pdf');
+    close(figParamHandle);
+
+    % Save the run time-series fits
+    plotFileName=fullfile(dropboxAnalysisDir, subAnalysisDirectory, ['RunFits_Sess' strtrim(num2str(ss)) '.pdf']);
+    saveas(figRunFitHandle, plotFileName, 'pdf');
+    close(figRunFitHandle);
+
 end % loop over sessions
 
 % Save the fit values

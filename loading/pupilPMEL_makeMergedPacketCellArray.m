@@ -18,10 +18,9 @@ sessDirs = {...
     'MelanopsinMRMaxMelCRF/HERO_mxs1/061016'
     };
 
-%sessDirs = {'MelanopsinMRMaxLMSCRF/HERO_gka1/060616'};
 % Define which sessions we'd like to merge
 whichSessionsToMerge = {[1], [2], [3], [4], [5], [6], [7], [8 9]};
-%whichSessionsToMerge = {[1]};
+
 
 % Set some parameters we need
 normalizationTimeSecs = 0.1;
