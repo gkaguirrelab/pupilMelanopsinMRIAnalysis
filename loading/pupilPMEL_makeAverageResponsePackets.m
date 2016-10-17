@@ -10,6 +10,7 @@ function [ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCell
 p = inputParser; p.KeepUnmatched = true;
 p.addRequired('mergedPacketCellArray',@iscell);
 p.addRequired('normFlag',@isnumeric);
+p.addParameter('lowFreqClean','false',@isboolean);
 p.addParameter('aggregateMethod','mean',@ischar);
 p.parse(paramsCellArray,varargin{:});
 
@@ -36,6 +37,15 @@ for ss = 1:NSessions
         
         % grab a packet that corresponds to a run for a given subject
         theRunPacket=mergedPacketCellArray{ss}{rr};
+        
+        % Adjust the response in the packet to remove the low-frequency
+        % variation in pupil response
+        if lowFreqClean
+            lowFreqComponent=theRunPacket.response.metaData.lowFreqComponent;
+            lowFreqComponent=lowFreqComponent-mean(lowFreqComponent);
+            theRunPacket.response.values = ...
+                theRunPacket.response.values - lowFreqComponent;
+        end
         
         for ii = 1:size(theRunPacket.stimulus.values,1)
             
