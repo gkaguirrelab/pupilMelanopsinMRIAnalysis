@@ -1,4 +1,4 @@
-function [ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray, normFlag, varargin )
+function [ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray, normFlag, varargin)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -13,6 +13,13 @@ p.addRequired('normFlag',@isnumeric);
 p.addParameter('lowFreqClean','false',@islogical);
 p.addParameter('aggregateMethod','mean',@ischar);
 p.parse(mergedPacketCellArray, normFlag,varargin{:});
+
+
+normalizationTimeSecs = 0.1;
+normalizationDurInd = normalizationTimeSecs*1000-1;
+extractionTimeSecs = 13;
+extractionDurInd = extractionTimeSecs*1000-1;
+
 
 
 % define the split params
@@ -40,7 +47,7 @@ for ss = 1:NSessions
         
         % Adjust the response in the packet to remove the low-frequency
         % variation in pupil response
-        if lowFreqClean
+        if p.Results.lowFreqClean
             lowFreqComponent=theRunPacket.response.metaData.lowFreqComponent;
             lowFreqComponent=lowFreqComponent-mean(lowFreqComponent);
             theRunPacket.response.values = ...
