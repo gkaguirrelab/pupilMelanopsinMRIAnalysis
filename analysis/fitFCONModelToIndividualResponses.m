@@ -204,8 +204,8 @@ for ss=1:nSessions
             
             % if the param fit has hit the boundary of the avaialable
             % parameter space, report this. Shouldn't happen.
-            if (myResultsVariable(ss,rr,ii) < min(log10(interpContrastBase)) || ...
-                    myResultsVariable(ss,rr,ii) > max(log10(interpContrastBase)) )
+            if (myResultsVariable(ss,rr,ii) <= min(log10(interpContrastBase)) || ...
+                    myResultsVariable(ss,rr,ii) >= max(log10(interpContrastBase)) )
                 warningText=['Hit effective contrast boundary (ss-rr-ii): ' strtrim(num2str(ss)) '-' strtrim(num2str(rr)) '-' strtrim(num2str(ii)) ];
                 warning(warningText);
             end
