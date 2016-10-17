@@ -6,9 +6,6 @@ normFlag=3; % zero center the initial period, % change units
 
 %% SETUP
 
-% Assign a name for this sub-analysis directory for saving plots and fits
-subAnalysisDirectory='fitTPUPModelToAverageResponse';
-
 % Identify the number of (sessions x subjects) and the number of stimulus
 % types from the dimensionality of the avgPackets cell array
 
@@ -58,39 +55,6 @@ for ss = 1:NSessionsMerged
         
     end % loop over subjects
 end % loop over stimuli
-
-
-%% Plot the data
-
-NSessionsMerged=size(mergedPacketCellArray,2);
-NStimTypes=6;
-
-for ss = 1:NSessionsMerged
-    plotFig = figure;
-    for mm = 1:NStimTypes
-        plot([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)], [0 0], '-k'); hold on;
-        % plot a model fit if it is available
-        if isfield(twoComponentFitToData{ss,mm}, 'modelResponseStruct')
-            plot(twoComponentFitToData{ss, mm}.modelResponseStruct.timebase, 100*twoComponentFitToData{ss,mm}.modelResponseStruct.values,'--k');
-        end
-        plot(avgPackets{ss, mm}.response.timebase, 100*avgPackets{ss, mm}.response.values);
-        xlim([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)]);
-    end
-    ylim(100*[-0.5 0.5]);
-    pbaspect([1 1 1]);
-    xlabel('Time [msecs]');
-    ylabel('Amplitude [%]');
-    adjustPlot(plotFig);
-    title({ mergedPacketCellArray{ss}{1}.metaData.projectName, strrep(mergedPacketCellArray{ss}{1}.metaData.subjectName, '_', '\_')});
-    
-    % Save the plot. If the saving directory doesn't exist, create it.
-    outDir = fullfile(dropboxAnalysisDir,subAnalysisDirectory,mergedPacketCellArray{ss}{1}.metaData.subjectName);
-    if ~exist(outDir, 'dir')
-        mkdir(outDir);
-    end
-    saveas(plotFig, fullfile(outDir, [mergedPacketCellArray{ss}{1}.metaData.projectName '.pdf']), 'pdf');
-    close(plotFig);
-end
 
 
 end % function
