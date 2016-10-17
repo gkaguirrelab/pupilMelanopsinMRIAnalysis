@@ -10,9 +10,9 @@ function [ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCell
 p = inputParser; p.KeepUnmatched = true;
 p.addRequired('mergedPacketCellArray',@iscell);
 p.addRequired('normFlag',@isnumeric);
-p.addParameter('lowFreqClean','false',@isboolean);
+p.addParameter('lowFreqClean','false',@islogical);
 p.addParameter('aggregateMethod','mean',@ischar);
-p.parse(paramsCellArray,varargin{:});
+p.parse(mergedPacketCellArray, normFlag,varargin{:});
 
 
 % define the split params
