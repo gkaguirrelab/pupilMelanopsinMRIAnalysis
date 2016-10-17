@@ -41,14 +41,15 @@ end
 
 %% Plot the across-subject data LMS
 
-sessionTypes={'Mel','LMS'};
-sessionSets=[1 3 5 7; 2 4 6 8];
-sessionTypeColor=[0 0 1; 1 0 0];
+sessionTypes={'LMS','Mel'};
+sessionSets=[1 2 3 4; 5 6 7 8];
+sessionTypeColor=[1 0 0; 0 0 1];
 
 for pp=1:length(sessionTypes)
     plotFig = figure;
     plot([avgPackets{sessionSets(pp,1), 1}.response.timebase(1) avgPackets{sessionSets(pp,1), 1}.response.timebase(end)], [0 0], '-k');
     hold on
+    acrossSubjectResponseMatrix=[];
     for cc=1:size(avgPackets,2)-1
         for ss=1:length(sessionSets(pp,:))
             acrossSubjectResponseMatrix(ss,:)=avgPackets{sessionSets(pp,ss),cc}.response.values;
@@ -56,7 +57,7 @@ for pp=1:length(sessionTypes)
         
         % Calculate the mean response and plot it
         meanAcrossSubjectResponse=nanmean(acrossSubjectResponseMatrix);
-        semAcrossSubjectResponse=nanstd(acrossSubjectResponseMatrix)/5*sqrt(length(sessionSets(pp,:)));
+        semAcrossSubjectResponse=nanstd(acrossSubjectResponseMatrix)/sqrt(length(sessionSets(pp,:)));
         plot(avgPackets{sessionSets(pp,ss),cc}.response.timebase, 100*meanAcrossSubjectResponse,'Color',sessionTypeColor(pp,:));
     end % loop over stimulus types
 
@@ -64,7 +65,7 @@ for pp=1:length(sessionTypes)
     plot(avgPackets{sessionSets(pp,ss),cc}.stimulus.timebase, 10*avgPackets{sessionSets(pp,ss),cc}.stimulus.values,'Color',[0 1 0]);
     
     % Clean up the plot
-    ylim(100*[-0.3 0.3]);
+    ylim(100*[-0.4 0.2]);
     pbaspect([1 1 1]);
     xlabel('Time [msecs]');
     ylabel('Amplitude [%]');
