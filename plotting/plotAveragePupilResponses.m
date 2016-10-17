@@ -3,7 +3,7 @@ function [ ] = plotAveragePupilResponses( mergedPacketCellArray, twoComponentFit
 
 %% GET THE AVERAGE PACKETS
 normFlag=3; % zero center the initial period, % change units
-[ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray, normFlag, 'aggregateMethod', 'median');
+[ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray, normFlag, 'lowFreqClean', true, 'aggregateMethod', 'median');
 
 %% Plot the within-subject data
 NSessionsMerged=size(mergedPacketCellArray,2);
