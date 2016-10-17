@@ -40,7 +40,7 @@ for ss = 1:NSessions
         
         % Adjust the response in the packet to remove the low-frequency
         % variation in pupil response
-        if lowFreqClean
+        if p.Results.lowFreqClean
             lowFreqComponent=theRunPacket.response.metaData.lowFreqComponent;
             lowFreqComponent=lowFreqComponent-mean(lowFreqComponent);
             theRunPacket.response.values = ...
