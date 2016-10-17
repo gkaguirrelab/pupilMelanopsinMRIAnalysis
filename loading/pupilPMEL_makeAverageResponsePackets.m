@@ -1,7 +1,9 @@
-function [ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray )
+function [ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray, filterStatus )
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
+% comment out or change here to change filter status
+filterStatus = 'filtered';
 
 % Set some parameters we need
 normalizationTimeSecs = 0.1;
@@ -12,7 +14,7 @@ extractionDurInd = extractionTimeSecs*1000-1;
 % define the split params
 splitParams.instanceIndex=[]; % will hold the instance index
 splitParams.splitDurationMsecs=13000; % Grab 13 second windows
-splitParams.normFlag=2; % zero center the initial period, change units
+splitParams.normFlag=3; % zero center the initial period, change units
 splitParams.normalizationWindowMsecs=100; % define the size of the norm window
 
 NSessionsMerged=size(mergedPacketCellArray,2);
@@ -31,6 +33,16 @@ for ss = 1:NSessionsMerged
         
         % grab a packet that corresponds to a run for a given subject
         theRunPacket=mergedPacketCellArray{1,ss}{rr};
+        
+        % if indicated, filter out the low frequency component
+        if strcmp(filterStatus, 'filtered');
+            
+            lowFreqComponent=theRunPacket.response.metaData.lowFreqComponent;
+            lowFreqComponent=lowFreqComponent-mean(lowFreqComponent);
+            theRunPacket.response.values = ...
+                theRunPacket.response.values - lowFreqComponent;
+        end
+        
         
         for ii = 1:size(mergedPacketCellArray{ss}{rr}.stimulus.values,1)
             splitParams.instanceIndex = ii;
