@@ -2,7 +2,7 @@ function [twoComponentFitToData] = fitTPUPModelToAverageResponse(mergedPacketCel
 
 %% GET THE AVERAGE PACKETS
 normFlag=3; % zero center the initial period, % change units
-[ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray, normFlag );
+[ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray, normFlag, 'aggregateMethod', 'median' );
 
 %% SETUP
 
