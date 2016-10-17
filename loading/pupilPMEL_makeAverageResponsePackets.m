@@ -1,6 +1,17 @@
-function [ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray, normFlag )
+function [ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray, normFlag, varargin )
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
+
+%% Parse vargin for options passed here
+%
+% Setting 'KeepUmatched' to true means that we can pass the varargin{:})
+% along from a calling routine without an error here, if the key/value
+% pairs recognized by the calling routine are not needed here.
+p = inputParser; p.KeepUnmatched = true;
+p.addRequired('mergedPacketCellArray',@iscell);
+p.addRequired('normFlag',@isnumeric);
+p.addParameter('aggregateMethod','mean',@ischar);
+p.parse(paramsCellArray,varargin{:});
 
 
 % define the split params
@@ -18,9 +29,9 @@ NSessions=size(mergedPacketCellArray,2);
 avgPackets=cell(NSessions,NStimTypes);
 
 for ss = 1:NSessions
-
+    
     NRuns=size(mergedPacketCellArray{ss},2);
-
+    
     for rr = 1:NRuns
         
         % grab a packet that corresponds to a run for a given subject
@@ -51,11 +62,19 @@ for ss = 1:NSessions
         end % loop over instances
     end % loop over runs
     
-    % Take the nanmean of the matrix of values for each simulus/response    
+    % Take the nanmean of the matrix of values for each simulus/response
     for cc=1:length(stimTypeCounter)
         if ~stimTypeCounter(cc)==0
-            avgPackets{ss,cc}.response.values = nanmean(avgPackets{ss,cc}.response.values);
-            avgPackets{ss,cc}.stimulus.values = nanmean(avgPackets{ss,cc}.stimulus.values);
+            switch (p.Results.aggregateMethod)
+                case 'mean'
+                    avgPackets{ss,cc}.response.values = nanmean(avgPackets{ss,cc}.response.values);
+                    avgPackets{ss,cc}.stimulus.values = nanmean(avgPackets{ss,cc}.stimulus.values);
+                case 'median'
+                    avgPackets{ss,cc}.response.values = nanmedian(avgPackets{ss,cc}.response.values);
+                    avgPackets{ss,cc}.stimulus.values = nanmedian(avgPackets{ss,cc}.stimulus.values);
+                otherwise
+                    error('Unknown aggregation method requested');
+            end % switch aggregateMethod
         end % check that an instances was found
     end % loop over stimTypes
 end % loop over sessions
