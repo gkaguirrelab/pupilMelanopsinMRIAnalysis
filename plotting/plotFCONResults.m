@@ -159,6 +159,7 @@ end
 
     
 plotFig = figure;
+title('Mean')
 hold on
 set(gca,'Xtick',[25 50 100 200 400],'XTickLabel',{'25%', '50%', '100%', '200%', '400%'})
 ylim([0 600])
