@@ -42,23 +42,20 @@ for ss = 1:NSessions
                 avgPackets{ss,thisStimType}=singlePacket;
                 stimTypeCounter(thisStimType)=1;
             else
-                avgPackets{ss,thisStimType}.response.values= ...
-                    avgPackets{ss,thisStimType}.response.values + singlePacket.response.values;
-                avgPackets{ss,thisStimType}.stimulus.values= ...
-                    avgPackets{ss,thisStimType}.stimulus.values + singlePacket.stimulus.values;
                 stimTypeCounter(thisStimType)=stimTypeCounter(thisStimType)+1;
+                avgPackets{ss,thisStimType}.response.values(stimTypeCounter(thisStimType),:)= ...
+                    singlePacket.response.values;
+                avgPackets{ss,thisStimType}.stimulus.values(stimTypeCounter(thisStimType),:)= ...
+                    singlePacket.stimulus.values;
             end % check for the existence of this stimType entry
         end % loop over instances
     end % loop over runs
     
-    % Divide each stimulus type by the number of added instances
-    
+    % Take the nanmean of the matrix of values for each simulus/response    
     for cc=1:length(stimTypeCounter)
         if ~stimTypeCounter(cc)==0
-            avgPackets{ss,cc}.response.values = ...
-                avgPackets{ss,cc}.response.values ./ stimTypeCounter(cc);
-            avgPackets{ss,cc}.stimulus.values = ...
-                avgPackets{ss,cc}.stimulus.values ./ stimTypeCounter(cc);
+            avgPackets{ss,cc}.response.values = nanmean(avgPackets{ss,cc}.response.values);
+            avgPackets{ss,cc}.stimulus.values = nanmean(avgPackets{ss,cc}.stimulus.values);
         end % check that an instances was found
     end % loop over stimTypes
 end % loop over sessions
