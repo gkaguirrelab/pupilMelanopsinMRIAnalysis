@@ -71,6 +71,6 @@ plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropbox
     dropboxAnalysisDir);
 
 % plot FCON results
-[theResult] = plotFCONResults(mergedPacketCellArray, dropboxAnalysisDir, myResultsVariable)
+plotFCONResults(mergedPacketCellArray, dropboxAnalysisDir, myResultsVariable);
 
 
