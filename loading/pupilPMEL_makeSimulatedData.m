@@ -54,6 +54,7 @@ thePacket= mergedPacketCellArray{1,1}{1,1};
 contrastList = {0.25; 0.50; 1; 2; 4; 8};
 thePacket.stimulus.vector = zeros(1,length(thePacket.stimulus.timebase));
 neuronalResponse = zeros(1,length(thePacket.stimulus.timebase));
+pupilResponse = zeros(1,length(thePacket.stimulus.timebase));
 
 % create pupil response function, which is to convolved with the
 % neuronalResponse. For now, this pupil response function is just a step to
@@ -85,13 +86,16 @@ for ii = 1:size(thePacket.stimulus.values,1);
     thePacket.stimulus.vector(stimOnset) = contrastList{contrast};
     neuronalResponse(stimOnset) = log10(thePacket.stimulus.vector(stimOnset))+1;
     
+    % In this mode, pupil response is proportional to the size at the
+    % beginning of stimulus presentation
+    pupilResponse(stimOnset) = neuronalResponse(stimOnset)/10 * pupilSize(stimOnset);
     
     
 end
 
-pupilResponse = conv(neuronalResponse,pupilResponseFunction);
-pupilResponse = pupilResponse(1:448000);
-thePacket.response.values = pupilSize + pupilResponse;
+pupilMotor = conv(pupilResponse,pupilResponseFunction);
+pupilMotor = pupilMotor(1:448000);
+thePacket.response.values = pupilSize + pupilMotor;
 
 % for now, the low frequency component is set to 0
 thePacket.response.metaData.lowFreqComponent = zeros(1,448000);
