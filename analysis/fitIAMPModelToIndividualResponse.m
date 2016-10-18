@@ -6,8 +6,15 @@ function [theResult] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, d
 subAnalysisDirectory='fitIAMPModelToAverageResponse';
 
 
-subjectKey = {'HERO_asb1';	'HERO_aso1';	'HERO_gka1';	'HERO_mxs1';	'HERO_asb1';	'HERO_aso1';	'HERO_gka1';	'HERO_mxs1'};
-projectKey = {'LMS'; 'LMS'; 'LMS'; 'LMS'; 'Melanopsin'; 'Melanopsin';	'Melanopsin';	'Melanopsin'};
+subjectKey = [];
+projectKey = [];
+for ss = 1:size(mergedPacketCellArray,2);
+    subjectKey{ss} = mergedPacketCellArray{ss}{1}.metaData.subjectName;
+    projectKey{ss} = mergedPacketCellArray{ss}{1}.metaData.projectName;
+end
+
+
+
 filterStatus = {'unfiltered' 'filtered'};
 normFlagStatus = {2,3};
 
@@ -31,7 +38,7 @@ temporalFit = tfeIAMP('verbosity','none');
 % Announce what we are about to do
 fprintf('>> Fitting individual amplitude model to data (IAMP)\n');
 
-for nn = 1:length(normFlagStatus);;
+for nn = 1:length(normFlagStatus);
     for ff = 1:length(filterStatus);
         beta{nn,ff} = [];
         baselineSizeCombined{nn,ff} = [];
@@ -85,7 +92,7 @@ for nn = 1:length(normFlagStatus);
                 theRunPacket=mergedPacketCellArray{1,ss}{rr};
                 if strcmp(filterStatus{ff},'filtered');
                     lowFreqComponent=theRunPacket.response.metaData.lowFreqComponent;
-                    lowFreqComponent=lowFreqComponent-mean(lowFreqComponent);
+                    lowFreqComponent=lowFreqComponent-nanmean(lowFreqComponent);
                     theRunPacket.response.values = ...
                         theRunPacket.response.values - lowFreqComponent;
                 end
@@ -162,15 +169,14 @@ delete(temporalFit);
 
 % First determine the R2 values
 
-subjectKey = {'HERO_asb1';	'HERO_aso1';	'HERO_gka1';	'HERO_mxs1';	'HERO_asb1';	'HERO_aso1';	'HERO_gka1';	'HERO_mxs1'};
-projectKey = {'LMS'; 'LMS'; 'LMS'; 'LMS'; 'Melanopsin'; 'Melanopsin';	'Melanopsin';	'Melanopsin'};
+
 subjectsLMS = [];
 subjectsMel = [];
 for x = 1:length(projectKey);
-    if strcmp(projectKey(x), 'LMS');
+    if strcmp(projectKey(x), 'LMSMRMaxLMSCRF');
         subjectsLMS = [subjectsLMS x];
     end
-    if strcmp(projectKey(x), 'Melanopsin');
+    if strcmp(projectKey(x), 'MelanopsinMRMaxLMSCRF');
         subjectsMel = [subjectsMel x];
     end
 end
@@ -178,7 +184,7 @@ end
 % First determine R2
 for nn = 1:length(normFlagStatus);
     for ff = 1:length(filterStatus);
-        for s = 1:8;
+       for s = 1:size(mergedPacketCellArray,2);
             for c = 1:6;
                 rsqCombined{nn,ff}{s,c} = [];
             end
@@ -187,7 +193,7 @@ for nn = 1:length(normFlagStatus);
 end
 
 
-for s = 1:8;
+for s = 1:size(mergedPacketCellArray,2);
     for n = 1:length(normFlagStatus);
         for f = 1:length(filterStatus);
             for c = 1:6
@@ -225,7 +231,7 @@ for nn = 1:length(normFlagStatus);
         plotFig = figure;
         
         
-        title(['LMS Subjects with ' filterStatus{f} ' data, with normFlag ' normFlagStatus{nn}])
+        %title(['LMS Subjects with ' filterStatus{f} ' data, with normFlag ' num2str(normFlagStatus{nn})])
         
         for s = subjectsLMS;
             colorList = ['r', 'b', 'g', 'y', 'm'];
@@ -236,8 +242,9 @@ for nn = 1:length(normFlagStatus);
             
             
             
-            
-            subplot(1, 4, s)
+            if length(subjectsLMS)>1
+                subplot(1, length(subjectsLMS), s)
+            end
             for c = 1:5
                 
                 x = baselineSizeCombined{nn,f}{s,c};
@@ -304,13 +311,13 @@ for nn = 1:length(normFlagStatus);
         if ~exist(outDir, 'dir')
             mkdir(outDir);
         end
-        saveas(plotFig, fullfile(outDir, ['baselineSizeByAmplitude_LMS_normFlag', num2str(normFlagStatus{nn}), '_', filterStatus{f}, '.png']), 'png');
+        saveas(plotFig, fullfile(outDir, ['TESTbaselineSizeByAmplitude_LMS_normFlag_', num2str(normFlagStatus{nn}), '_', filterStatus{f}, '.png']), 'png');
         close(plotFig);
         
         % now plotting the Melanopsin subjects
         % we're plotting only the data that has the low frequency component removed
         plotFig = figure;
-        title(['Mel Subjects with ' filterStatus{f} ' data, with normFlag ' normFlagStatus{nn}])
+        %title(['Mel Subjects with ' filterStatus{f} ' data, with normFlag ' num2str(normFlagStatus{nn})])
 
         for s = subjectsMel;
             colorList = ['r', 'b', 'g', 'y', 'm'];
@@ -321,8 +328,9 @@ for nn = 1:length(normFlagStatus);
             
             
             
-            
-            subplot(1, 4, s-4)
+            if length(subjectsMel)>1
+                subplot(1, length(subjectsMel), find(subjectsMel==s))
+            end
             for c = 1:5
                 
                 x = baselineSizeCombined{nn,f}{s,c};
@@ -390,7 +398,7 @@ for nn = 1:length(normFlagStatus);
         if ~exist(outDir, 'dir')
             mkdir(outDir);
         end
-        saveas(plotFig, fullfile(outDir, ['baselineSizeByAmplitude_Mel_normFlag', num2str(normFlagStatus{nn}), '_', filterStatus{f}, '.png']), 'png');
+        saveas(plotFig, fullfile(outDir, ['TESTbaselineSizeByAmplitude_Mel_normFlag_', num2str(normFlagStatus{nn}), '_', filterStatus{f}, '.png']), 'png');
         close(plotFig);
     end
 end
