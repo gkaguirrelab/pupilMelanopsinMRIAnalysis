@@ -129,15 +129,11 @@ for nn = 1:length(normFlagStatus);
                     singlePacket.kernel.timebase = [0:12999];
                     
                     % determine baseline size
-                    if strcmp(filterStatus{ff},'unfiltered');
-                        sizeMean = nanmean(theRunPacket.response.values);
-                        baselineSize{ss,contrast} = [baselineSize{ss, contrast} theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)];
-                    end
-                    if strcmp(filterStatus{ff},'filtered');
+                   
                         sizeMean = nanmean(theRunPacket.response.metaData.lowFreqComponent);
-                        baselineSize{ss,contrast} = [baselineSize{ss, contrast} (theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)-theRunPacket.response.metaData.lowFreqComponent(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs))];
+                        baselineSize{ss,contrast} = [baselineSize{ss, contrast} (theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs))];
                         baselineSize_lowFreq{ss,contrast} = [baselineSize_lowFreq{ss, contrast} theRunPacket.response.metaData.lowFreqComponent(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)];
-                    end
+                    
                     
                     % Conduct the fit
                     [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix);
@@ -173,10 +169,10 @@ delete(temporalFit);
 subjectsLMS = [];
 subjectsMel = [];
 for x = 1:length(projectKey);
-    if strcmp(projectKey(x), 'LMSMRMaxLMSCRF');
+    if strcmp(projectKey(x), 'MelanopsinMRMaxLMSCRF');
         subjectsLMS = [subjectsLMS x];
     end
-    if strcmp(projectKey(x), 'MelanopsinMRMaxLMSCRF');
+    if strcmp(projectKey(x), 'MelanopsinMRMaxMelCRF');
         subjectsMel = [subjectsMel x];
     end
 end
@@ -243,7 +239,7 @@ for nn = 1:length(normFlagStatus);
             
             
             if length(subjectsLMS)>1
-                subplot(1, length(subjectsLMS), s)
+                subplot(2, length(subjectsLMS)/2, s)
             end
             for c = 1:5
                 
@@ -311,7 +307,7 @@ for nn = 1:length(normFlagStatus);
         if ~exist(outDir, 'dir')
             mkdir(outDir);
         end
-        saveas(plotFig, fullfile(outDir, ['TESTbaselineSizeByAmplitude_LMS_normFlag_', num2str(normFlagStatus{nn}), '_', filterStatus{f}, '.png']), 'png');
+        saveas(plotFig, fullfile(outDir, ['baselineSizeByAmplitude_LMS_normFlag_', num2str(normFlagStatus{nn}), '_', filterStatus{f}, '.png']), 'png');
         close(plotFig);
         
         % now plotting the Melanopsin subjects
@@ -329,7 +325,7 @@ for nn = 1:length(normFlagStatus);
             
             
             if length(subjectsMel)>1
-                subplot(1, length(subjectsMel), find(subjectsMel==s))
+                subplot(2, length(subjectsMel)/2, find(subjectsMel==s))
             end
             for c = 1:5
                 
@@ -398,7 +394,7 @@ for nn = 1:length(normFlagStatus);
         if ~exist(outDir, 'dir')
             mkdir(outDir);
         end
-        saveas(plotFig, fullfile(outDir, ['TESTbaselineSizeByAmplitude_Mel_normFlag_', num2str(normFlagStatus{nn}), '_', filterStatus{f}, '.png']), 'png');
+        saveas(plotFig, fullfile(outDir, ['baselineSizeByAmplitude_Mel_normFlag_', num2str(normFlagStatus{nn}), '_', filterStatus{f}, '.png']), 'png');
         close(plotFig);
     end
 end
