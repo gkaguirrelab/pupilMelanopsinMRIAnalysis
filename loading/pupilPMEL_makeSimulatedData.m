@@ -1,5 +1,13 @@
 function [simulatedMergedPacketCellArray] = pupilPMEL_makeSimulatedData()
 
+% Specify how the low frequency component is created. Two options: (1) low 
+% frequency component relates to arousal, and this low frequency component
+% has no carryover effect. (2) low frequency component relates to a
+% carryover effect, where seeing a 400% contrast leaves the pupil a little
+% bit more constricted
+
+%lowFreq = 'arousal';
+lowFreq = 'carryOver'
 
 
 
@@ -56,15 +64,16 @@ simulatedMergedPacketCellArray = [];
 for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
     % the final simulated data will be based off all runs for session 1
     thePacket= mergedPacketCellArray{1}{rr};
-    
+    thePacket.response.values = [];
     
     % code used for translating stimulus type into contrast
     contrastList = {0.25; 0.50; 1; 2; 4; 8};
     
     % make basic structures for stimuli and response vectors 
     thePacket.stimulus.vector = zeros(1,length(thePacket.stimulus.timebase));
+    retinalResponse = zeros(1,length(thePacket.stimulus.timebase));
     neuronalResponse = zeros(1,length(thePacket.stimulus.timebase));
-    pupilResponse = zeros(1,length(thePacket.stimulus.timebase));
+    
     
     % create pupil response function, which is to convolved with the
     % neuronalResponse. For now, this pupil response function is just a step to
@@ -74,9 +83,6 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
     pupilResponseFunction = zeros(1,length(thePacket.stimulus.timebase));
     pupilResponseFunction(101:3000) = -2;
     
-    % Create pupil size vector. For now, the baseline pupil size is the loq
-    % frequency component for a given run.
-    pupilSize = thePacket.response.metaData.lowFreqComponent;
     
     % pre-allocate space for data
     simulatedMergedPacketCellArray{1}{rr} = [];
@@ -106,25 +112,86 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
         
         % Make neuronalResponse vector. Simply encode stimulus contrast on
         % a log scale
-        neuronalResponse(stimOnset) = log10(thePacket.stimulus.vector(stimOnset))+1;
+        retinalResponse(stimOnset) = log10(thePacket.stimulus.vector(stimOnset))+1;
         
-        % In this mode, pupil response is proportional to the size at the
-        % beginning of stimulus presentation
-        pupilResponse(stimOnset) = neuronalResponse(stimOnset)/10 * pupilSize(stimOnset);
+        
+        
+        % In this mode, neuronal response is proportional to the size at the
+        % beginning of stimulus presentation. That is neuronalResponse is a
+        % percent change related to baseline size, where the percent is
+        % dictated by the stimulus type. Pupil size can determined by output
+        % of pupilMotor below (if there is a carryover effect and we don't 
+        % simply return back to baseline) or an independent low frequency 
+        % component, but for the first stimulus, we're starting
+        % with a baseline size of 5mm
+        
+        if strcmp(lowFreq, 'arousal');
+            if ii == 1;
+                pre = 5;
+            else
+                lowFreqComponent = -1 + (1+1).*rand(1,1);
+                pre = post+lowFreqComponent;
+            end
+        end
+        
+        
+        if strcmp(lowFreq, 'carryOver');
+            if ii == 1;
+                pre = 5;
+            else
+                pre = post;
+            end
+        end
+        
+         % an attempt to introduce "circularity"
+        retinalResponse(stimOnset) = log10(thePacket.stimulus.vector(stimOnset))+1 * pre/10;
+        
+        neuronalResponse(stimOnset) = retinalResponse(stimOnset)/10 * pre;
+
+        % make the pupilMotor response. The input for pupilMotor is
+        % the neuronalResponse vector and  "pre" pupil size and the output
+        % is a"stimulated" pupil size (how small it gets in response to the trial) and
+        % "post" pupil size. Post pupil size is an area in which we
+        % can add some of this memory effect -> like if in response to a
+        % 400% contrast, the pupil stays a little extra dilated. Post pupil
+        % response is also an area in which we can add a low frequency
+        % component. Note that we're starting with a baseline size of 5 mm.
+        
+        % for now, when shown a stimulus, the pupil contrast by 2 times the
+        % neuronalResponse
+        stimulated = -2 * neuronalResponse(stimOnset);
+        
+        % pupilMotor functions differently depending on which lowFreq
+        % component is specified
+        if strcmp(lowFreq, 'arousal');
+            post = pre;
+        end
+        
+        
+        if strcmp(lowFreq, 'carryOver');
+            % stay a little bit more constricted after 400% and 200%
+            % contrast, a little more dilated after 25% and 50% contrast.
+            % no change after 100% contrast
+            post = pre  + - pre/2*log10(thePacket.stimulus.vector(stimOnset));
+        end
+        
+        % turn pre, stimulated, and post into a reasonable response vector.
+        % The response vector always comes back to the same baseline size
+        % as before the stimulus so model fitting isn't ambiguous
+        %
+        thePacket.response.values(stimOnset:stimOnset+101)=pre;
+        thePacket.response.values(stimOnset+101:stimOnset+3000) = stimulated;
+        thePacket.response.values(stimOnset+3000:length(thePacket.stimulus.timebase)) = pre;
+        
         
         
     end
     
-    % make pupilMotor time series, which basically says how much we want to
-    % contract for a given stimulus
-    pupilMotor = conv(pupilResponse,pupilResponseFunction);
-    pupilMotor = pupilMotor(1:448000);
-    
-    % combine pupilMotor with pupilSize to get our pupil time series
-    thePacket.response.values = pupilSize + pupilMotor;
+  
     
     % save in proper format
     simulatedMergedPacketCellArray{1}{rr} = thePacket;
+    simulatedMergedPacketCellArray{1}{rr}.metaData.simulationStyle = lowFreq;
 end
 
 end
