@@ -245,8 +245,11 @@ for s = 1:size(mergedPacketCellArray,2);
                         
                     end
                 end
-                rsq = corrcoef(x,y);
-                rsq = rsq(1,2)*rsq(1,2);
+                x = [ones(1,length(x)); x];
+                x = x';
+                y = y';
+                [B,BINT,R,RINT,STATS] = regress(y,x);
+                rsq = STATS(1);
                 rsqCombined{n,f}{s,c} = [rsqCombined{n,f}{s,c}, rsq];
             end
         end
@@ -254,6 +257,17 @@ for s = 1:size(mergedPacketCellArray,2);
 end
 
 %% Actually do the plotting. We want 4 sets of plots: filtered and not filtered, raw values and percent change
+
+% to save simulated data according to simulation method
+
+if strcmp(mergedPacketCellArray{1}{1}.metaData.simulationStyle, 'arousal');
+    simFileName = '_simulatedArousal';
+elseif strcmp(mergedPacketCellArray{1}{1}.metaData.simulationStyle, 'carryOver')
+    simFileName = '_simulatedCarryOver';
+else
+    simFileName = '';
+end
+
 
 
 % plot LMS subjects
@@ -344,7 +358,7 @@ for nn = 1:length(normFlagStatus);
         if ~exist(outDir, 'dir')
             mkdir(outDir);
         end
-        saveas(plotFig, fullfile(outDir, ['baselineSizeByAmplitude_LMS_normFlag_', num2str(normFlagStatus{nn}), '_', filterStatus{f}, '.png']), 'png');
+        saveas(plotFig, fullfile(outDir, ['baselineSizeByAmplitude_LMS_normFlag_', num2str(normFlagStatus{nn}), '_', filterStatus{f}, simFileName, '.png']), 'png');
         close(plotFig);
         
         % now plotting the Melanopsin subjects
@@ -431,7 +445,7 @@ for nn = 1:length(normFlagStatus);
         if ~exist(outDir, 'dir')
             mkdir(outDir);
         end
-        saveas(plotFig, fullfile(outDir, ['baselineSizeByAmplitude_Mel_normFlag_', num2str(normFlagStatus{nn}), '_', filterStatus{f}, '.png']), 'png');
+        saveas(plotFig, fullfile(outDir, ['baselineSizeByAmplitude_Mel_normFlag_', num2str(normFlagStatus{nn}), '_', filterStatus{f}, simFileName, '.png']), 'png');
         close(plotFig);
     end
 end
