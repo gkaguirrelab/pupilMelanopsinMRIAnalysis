@@ -1,7 +1,11 @@
-function [theResult] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, dropboxAnalysisDir)
+function [beta, baselineSizeCombined, rsqCombined, oneBefore] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, dropboxAnalysisDir)
 
 
 % Note about result structure: result{normFlag,filter}{subject,contrast}
+% oneBefore is a little bit different: oneBefore is
+% {result}{normFlag,filter}{subject}. each subject has as {stimuli,stimuli
+% presented before} matrix, with each cell being result values of
+% corresponding trials
 
 subAnalysisDirectory='fitIAMPModelToAverageResponse';
 
@@ -38,12 +42,27 @@ temporalFit = tfeIAMP('verbosity','none');
 % Announce what we are about to do
 fprintf('>> Fitting individual amplitude model to data (IAMP)\n');
 
-for nn = 1:length(normFlagStatus);
-    for ff = 1:length(filterStatus);
-        beta{nn,ff} = [];
-        baselineSizeCombined{nn,ff} = [];
+
+% set up some variables
+for x = 1:2 % for making oneBefore variable with 1 = beta, 2 = baseline size
+    for nn = 1:length(normFlagStatus);
+        for ff = 1:length(filterStatus);
+            beta{nn,ff} = [];
+            baselineSizeCombined{nn,ff} = [];
+            for ss = 1:size(mergedPacketCellArray,2)
+                for presentedStimuli = 1:6;
+                    for stimuliOneBefore = 1:6;
+                        oneBefore{x}{nn,ff}{ss}{presentedStimuli,stimuliOneBefore} = [];
+                        oneBefore{x}{nn,3}{ss}{presentedStimuli,stimuliOneBefore} = [];
+                    end
+                end
+            end
+            
+        end
     end
 end
+
+
 
 
 for nn = 1:length(normFlagStatus);
@@ -97,6 +116,7 @@ for nn = 1:length(normFlagStatus);
                         theRunPacket.response.values - lowFreqComponent;
                 end
                 
+                contrastList = [];
                 % Loop over instances / events
                 for ii = 1:size(mergedPacketCellArray{ss}{rr}.stimulus.values,1)
                     
@@ -112,6 +132,10 @@ for nn = 1:length(normFlagStatus);
                     
                     % identify contrast associated with that instance
                     contrast = theRunPacket.stimulus.metaData.stimTypes(ii);
+                    
+                    % store contrast value in contrastList for use with
+                    % oneBefore variable
+                    contrastList = [contrastList, contrast];
                     
                     % create stimulus profile -> has to be a blip with this
                     % configuration of IAMP (it convolves the stimulus profile
@@ -134,8 +158,16 @@ for nn = 1:length(normFlagStatus);
                         baselineSize{ss,contrast} = [baselineSize{ss, contrast} (theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs))];
                         baselineSize_lowFreq{ss,contrast} = [baselineSize_lowFreq{ss, contrast} theRunPacket.response.metaData.lowFreqComponent(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)];
                     
-                    
-                    % Conduct the fit
+                        % store for oneBefore
+                        
+                        if ii == 1;
+                        else
+                            
+                        oneBefore{2}{nn,ff}{ss}{contrast,contrastList(ii-1)} = [oneBefore{2}{nn,ff}{ss}{contrast,contrastList(ii-1)}, (theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs))];
+                        oneBefore{2}{nn,3}{ss}{contrast,contrastList(ii-1)} = [oneBefore{2}{nn,3}{ss}{contrast,contrastList(ii-1)}, theRunPacket.response.metaData.lowFreqComponent(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)];
+                        end
+                        
+                        % Conduct the fit
                     [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix);
                     
                     % Store the fitResponse
@@ -147,7 +179,11 @@ for nn = 1:length(normFlagStatus);
                     IAMPFitToData{ss,contrast}{1,ii}.modelResponseStruct=modelResponseStruct;
                     betaPerAmplitude{ss,contrast} = [betaPerAmplitude{ss,contrast} paramsFit.paramMainMatrix];
                     
-                    
+                    if ii == 1;
+                        else
+                            
+                        oneBefore{1}{nn,ff}{ss}{contrast,contrastList(ii-1)} = [oneBefore{2}{nn,ff}{ss}{contrast,contrastList(ii-1)}, paramsFit.paramMainMatrix];
+                    end
                 end % loop over events
             end % loop over stimulus types
         end % loop over sessions
@@ -221,6 +257,7 @@ end
 
 
 % plot LMS subjects
+
 
 for nn = 1:length(normFlagStatus);
     for f = 1:length(filterStatus);
