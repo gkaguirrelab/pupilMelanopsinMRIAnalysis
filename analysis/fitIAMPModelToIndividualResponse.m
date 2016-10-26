@@ -168,8 +168,9 @@ for nn = 1:length(normFlagStatus);
                         end
                         
                         % Conduct the fit
-                    [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix);
-                    
+                    [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix, 'searchMethod','linearRegression');
+                    %[paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix);
+
                     % Store the fitResponse
                     % Save the paramsFit. You'll discover that this is a structure,
                     % with one field being "amplitude". Save the value associated with
@@ -182,7 +183,7 @@ for nn = 1:length(normFlagStatus);
                     if ii == 1;
                         else
                             
-                        oneBefore{1}{nn,ff}{ss}{contrast,contrastList(ii-1)} = [oneBefore{2}{nn,ff}{ss}{contrast,contrastList(ii-1)}, paramsFit.paramMainMatrix];
+                        oneBefore{1}{nn,ff}{ss}{contrast,contrastList(ii-1)} = [oneBefore{1}{nn,ff}{ss}{contrast,contrastList(ii-1)}, paramsFit.paramMainMatrix];
                     end
                     
                     check = [check theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)-singlePacket.metaData.splitOffAnInstance.normValue];
@@ -253,7 +254,7 @@ for s = 1:size(mergedPacketCellArray,2);
                 x = x';
                 y = y';
                 [B,BINT,R,RINT,STATS] = regress(y,x);
-                slope = B(1)
+                slope = B(1);
                 rsq = STATS(1);
                 slopeCombined{n,f}{s,c} = [slopeCombined{n,f}{s,c}, slope];
                 rsqCombined{n,f}{s,c} = [rsqCombined{n,f}{s,c}, rsq];
