@@ -1,4 +1,4 @@
-function [beta, baselineSizeCombined, rsqCombined, oneBefore] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, dropboxAnalysisDir)
+function [beta, baselineSizeCombined, rsqCombined, slopeCombined, oneBefore] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, dropboxAnalysisDir)
 
 
 % Note about result structure: result{normFlag,filter}{subject,contrast}
@@ -63,7 +63,7 @@ for x = 1:2 % for making oneBefore variable with 1 = beta, 2 = baseline size
 end
 
 
-
+check = [];
 
 for nn = 1:length(normFlagStatus);
     if normFlagStatus{nn} == 2;
@@ -184,6 +184,9 @@ for nn = 1:length(normFlagStatus);
                             
                         oneBefore{1}{nn,ff}{ss}{contrast,contrastList(ii-1)} = [oneBefore{2}{nn,ff}{ss}{contrast,contrastList(ii-1)}, paramsFit.paramMainMatrix];
                     end
+                    
+                    check = [check theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)-singlePacket.metaData.splitOffAnInstance.normValue];
+                    
                 end % loop over events
             end % loop over stimulus types
         end % loop over sessions
@@ -213,12 +216,13 @@ for x = 1:length(projectKey);
     end
 end
 
-% First determine R2
+% First determine R2 and slope
 for nn = 1:length(normFlagStatus);
     for ff = 1:length(filterStatus);
        for s = 1:size(mergedPacketCellArray,2);
             for c = 1:6;
                 rsqCombined{nn,ff}{s,c} = [];
+                slopeCombined{nn,ff}{s,c} = [];
             end
         end
     end
@@ -249,7 +253,9 @@ for s = 1:size(mergedPacketCellArray,2);
                 x = x';
                 y = y';
                 [B,BINT,R,RINT,STATS] = regress(y,x);
+                slope = B(1)
                 rsq = STATS(1);
+                slopeCombined{n,f}{s,c} = [slopeCombined{n,f}{s,c}, slope];
                 rsqCombined{n,f}{s,c} = [rsqCombined{n,f}{s,c}, rsq];
             end
         end
@@ -260,12 +266,15 @@ end
 
 % to save simulated data according to simulation method
 
-if strcmp(mergedPacketCellArray{1}{1}.metaData.simulationStyle, 'arousal');
-    simFileName = '_simulatedArousal';
-elseif strcmp(mergedPacketCellArray{1}{1}.metaData.simulationStyle, 'carryOver')
-    simFileName = '_simulatedCarryOver';
+if isfield(mergedPacketCellArray{1}{1}.metaData, 'simulationStyle');
+    if strcmp(mergedPacketCellArray{1}{1}.metaData.simulationStyle, 'arousal');
+        simFileName = '_simulatedArousal';
+    elseif strcmp(mergedPacketCellArray{1}{1}.metaData.simulationStyle, 'carryOver')
+        simFileName = '_simulatedCarryOver';
+    
+    end
 else
-    simFileName = '';
+        simFileName = '';
 end
 
 
@@ -329,7 +338,7 @@ for nn = 1:length(normFlagStatus);
                 
                 
             end
-            legend(legendInfo)
+            %legend(legendInfo)
             for c = 1:5
                 
                 
@@ -415,7 +424,7 @@ for nn = 1:length(normFlagStatus);
                 
                 
             end
-            legend(legendInfo)
+            %legend(legendInfo)
             for c = 1:5
                 
                 
