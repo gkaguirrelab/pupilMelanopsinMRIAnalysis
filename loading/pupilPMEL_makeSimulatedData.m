@@ -6,8 +6,8 @@ function [simulatedMergedPacketCellArray] = pupilPMEL_makeSimulatedData()
 % carryover effect, where seeing a 400% contrast leaves the pupil a little
 % bit more constricted
 
-lowFreq = 'arousal';
-%lowFreq = 'carryOver'
+%lowFreq = 'arousal';
+lowFreq = 'carryOver'
 
 
 
@@ -67,7 +67,7 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
     thePacket.response.values = 5*ones(1,length(thePacket.stimulus.timebase));
     
     % code used for translating stimulus type into contrast
-    contrastList = {0.25; 0.50; 1; 2; 4; 8};
+    contrastList = {0.25; 0.50; 1; 2; 4; 1};
     
     % make basic structures for stimuli and response vectors 
     thePacket.stimulus.vector = zeros(1,length(thePacket.stimulus.timebase));
@@ -97,6 +97,7 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
         end
         contrast = thePacket.stimulus.metaData.stimTypes(ii);
         
+        
         % Make stimulus vector. In this case, just grab an existing stimulus
         % vector
         % from some random subject. contrastList converts from 1-6 stimuli
@@ -121,9 +122,11 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
         if strcmp(lowFreq, 'arousal');
             if ii == 1;
                 pre = 5;
+                neuronalResponseChangeFactor = 1;
             else
                 lowFreqComponent = -1 + (1+1).*rand(1,1);
                 pre = delta+lowFreqComponent;
+                neuronalResponseChangeFactor = 1;
             end
         end
         
@@ -131,15 +134,21 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
         if strcmp(lowFreq, 'carryOver');
             if ii == 1;
                 pre = 5;
+                neuronalResponseChangeFactor = 1;
             else
                 pre = delta;
             end
         end
         
-         % an attempt to introduce "circularity"
+         % One method of giving our data have a positive relationship
+         % between baseline size and percent signal change is to have the
+         % reintal response also be sensitive to light
         %retinalResponse(stimOnset) = (log10(thePacket.stimulus.vector(stimOnset))+1) * pre/10;
         
-        neuronalResponse(stimOnset) = retinalResponse(stimOnset)/10 * pre;
+        % added a carry-over effect, where the neuronalResponse is changed
+        % by the stimulus that came before. neuronalResponseChangeFactor is
+        % defined below so that it applies to the stimuli that comes next.
+        neuronalResponse(stimOnset) = retinalResponse(stimOnset)/10 * pre / neuronalResponseChangeFactor;
 
         % make the pupilMotor response. The input for pupilMotor is
         % the neuronalResponse vector and  "pre" pupil size and the output
@@ -166,7 +175,8 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
             % stay a little bit more constricted after 400% and 200%
             % contrast, a little more dilated after 25% and 50% contrast.
             % no change after 100% contrast
-            delta = pre  - log10(thePacket.stimulus.vector(stimOnset));
+            delta = pre  - 2*log10(thePacket.stimulus.vector(stimOnset));
+            neuronalResponseChangeFactor = ((log10(thePacket.stimulus.vector(stimOnset)))/5) + 1;
         end
         
         % turn pre, stimulated, and post into a reasonable response vector.
