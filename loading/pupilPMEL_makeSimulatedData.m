@@ -6,8 +6,8 @@ function [simulatedMergedPacketCellArray] = pupilPMEL_makeSimulatedData()
 % carryover effect, where seeing a 400% contrast leaves the pupil a little
 % bit more constricted
 
-%lowFreq = 'arousal';
-lowFreq = 'carryOver'
+lowFreq = 'arousal';
+%lowFreq = 'carryOver'
 
 
 
@@ -64,7 +64,7 @@ simulatedMergedPacketCellArray = [];
 for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
     % the final simulated data will be based off all runs for session 1
     thePacket= mergedPacketCellArray{1}{rr};
-    thePacket.response.values = [];
+    thePacket.response.values = 5*ones(1,length(thePacket.stimulus.timebase));
     
     % code used for translating stimulus type into contrast
     contrastList = {0.25; 0.50; 1; 2; 4; 8};
@@ -74,14 +74,7 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
     retinalResponse = zeros(1,length(thePacket.stimulus.timebase));
     neuronalResponse = zeros(1,length(thePacket.stimulus.timebase));
     
-    
-    % create pupil response function, which is to convolved with the
-    % neuronalResponse. For now, this pupil response function is just a step to
-    % 2 for 3 s. With a slight delay introduced so when later functions
-    % norm the time series for a given trial we can still do so
-    % appropriately.
-    pupilResponseFunction = zeros(1,length(thePacket.stimulus.timebase));
-    pupilResponseFunction(101:3000) = -2;
+
     
     
     % pre-allocate space for data
@@ -130,7 +123,7 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
                 pre = 5;
             else
                 lowFreqComponent = -1 + (1+1).*rand(1,1);
-                pre = post+lowFreqComponent;
+                pre = delta+lowFreqComponent;
             end
         end
         
@@ -139,19 +132,20 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
             if ii == 1;
                 pre = 5;
             else
-                pre = post;
+                pre = delta;
             end
         end
         
          % an attempt to introduce "circularity"
-        retinalResponse(stimOnset) = log10(thePacket.stimulus.vector(stimOnset))+1 * pre/10;
+        %retinalResponse(stimOnset) = (log10(thePacket.stimulus.vector(stimOnset))+1) * pre/10;
         
         neuronalResponse(stimOnset) = retinalResponse(stimOnset)/10 * pre;
 
         % make the pupilMotor response. The input for pupilMotor is
         % the neuronalResponse vector and  "pre" pupil size and the output
         % is a"stimulated" pupil size (how small it gets in response to the trial) and
-        % "post" pupil size. Post pupil size is an area in which we
+        % "change" pupil size, the corresponds to a different starting 
+        % position for the next run. Post pupil size is an area in which we
         % can add some of this memory effect -> like if in response to a
         % 400% contrast, the pupil stays a little extra dilated. Post pupil
         % response is also an area in which we can add a low frequency
@@ -159,12 +153,12 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
         
         % for now, when shown a stimulus, the pupil contrast by 2 times the
         % neuronalResponse
-        stimulated = -2 * neuronalResponse(stimOnset);
+        stimulated = (-2 * neuronalResponse(stimOnset)) + pre;
         
         % pupilMotor functions differently depending on which lowFreq
         % component is specified
         if strcmp(lowFreq, 'arousal');
-            post = pre;
+            delta = pre;
         end
         
         
@@ -172,15 +166,15 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
             % stay a little bit more constricted after 400% and 200%
             % contrast, a little more dilated after 25% and 50% contrast.
             % no change after 100% contrast
-            post = pre  + - pre/2*log10(thePacket.stimulus.vector(stimOnset));
+            delta = pre  - log10(thePacket.stimulus.vector(stimOnset));
         end
         
         % turn pre, stimulated, and post into a reasonable response vector.
         % The response vector always comes back to the same baseline size
         % as before the stimulus so model fitting isn't ambiguous
         %
-        thePacket.response.values(stimOnset:stimOnset+101)=pre;
-        thePacket.response.values(stimOnset+101:stimOnset+3000) = stimulated;
+        thePacket.response.values(stimOnset:stimOnset+105)=pre;
+        thePacket.response.values(stimOnset+105:stimOnset+3000) = stimulated;
         thePacket.response.values(stimOnset+3000:length(thePacket.stimulus.timebase)) = pre;
         
         
