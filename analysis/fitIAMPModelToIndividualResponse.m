@@ -168,8 +168,8 @@ for nn = 1:length(normFlagStatus);
                         end
                         
                         % Conduct the fit
-                    [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix, 'searchMethod','linearRegression');
-                    %[paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix);
+                    %[paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix, 'searchMethod','linearRegression');
+                    [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix);
 
                     % Store the fitResponse
                     % Save the paramsFit. You'll discover that this is a structure,
@@ -327,7 +327,12 @@ for nn = 1:length(normFlagStatus);
                 
                 %pbaspect([1 1 1]);
                 xlabel('Baseline Size');
-                ylabel('Beta');
+                if nn == 1;
+                    ylabel('Amplitude (mm)');
+                end
+                if nn == 2;
+                    ylabel('Percentage Change (%)');
+                end
                 
                 title(['Subject: ', subjectKey{s}])
                 
@@ -413,7 +418,12 @@ for nn = 1:length(normFlagStatus);
                 
                 %pbaspect([1 1 1]);
                 xlabel('Baseline Size');
-                ylabel('Beta');
+                if nn == 1;
+                    ylabel('Amplitude (mm)');
+                end
+                if nn == 2;
+                    ylabel('Percentage Change (%)');
+                end
                 
                 title(['Subject: ', subjectKey{s}])
                 
