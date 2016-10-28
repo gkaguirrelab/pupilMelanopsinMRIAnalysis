@@ -104,7 +104,7 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
         % designation to 0.25-0.5-1-etc.
         thePacket.stimulus.vector(stimOnset) = contrastList{contrast};
         
-        % Make neuronalResponse vector. Simply encode stimulus contrast on
+        % Make retinalResponse vector. Simply encode stimulus contrast on
         % a log scale
         retinalResponse(stimOnset) = log10(thePacket.stimulus.vector(stimOnset))+1;
         
@@ -175,7 +175,20 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
             % stay a little bit more constricted after 400% and 200%
             % contrast, a little more dilated after 25% and 50% contrast.
             % no change after 100% contrast
-            delta = pre  - 2*log10(thePacket.stimulus.vector(stimOnset));
+            
+            % to make baseline size totally determined by previous contrast
+            % level
+            delta = 5- 2*log10(thePacket.stimulus.vector(stimOnset));
+            
+            % to make baseline size move from where it's at to a new
+            % location based on previous contrast level. note that this
+            % means that baseline size is predicted less well by previous
+            % contrast (since in this case, previous contrast is just one
+            % of the long history of stimuli that have shaped the baseline
+            % size)
+            %delta = pre  - 2*log10(thePacket.stimulus.vector(stimOnset));
+            
+            
             neuronalResponseChangeFactor = ((log10(thePacket.stimulus.vector(stimOnset)))/5) + 1;
         end
         
