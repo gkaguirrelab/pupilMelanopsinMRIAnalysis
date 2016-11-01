@@ -1,4 +1,4 @@
-function [beta, baselineSizeCombined, rsqCombined, slopeCombined, oneBefore] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, dropboxAnalysisDir)
+function [beta, baselineSizeCombined, rsqCombined, slopeCombined, betaRawCarryOver, betaPercentCarryOver, baselineSizeCarryOver, lowFreqCarryOver] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, dropboxAnalysisDir)
 
 
 % Note about result structure: result{normFlag,filter}{subject,contrast}
@@ -158,15 +158,9 @@ for nn = 1:length(normFlagStatus);
                         baselineSize{ss,contrast} = [baselineSize{ss, contrast} (theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs))];
                         baselineSize_lowFreq{ss,contrast} = [baselineSize_lowFreq{ss, contrast} theRunPacket.response.metaData.lowFreqComponent(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)];
                     
-                        % store for oneBefore
-                        
-                        if ii == 1;
-                        else
-                            
-                        oneBefore{2}{nn,ff}{ss}{contrast,contrastList(ii-1)} = [oneBefore{2}{nn,ff}{ss}{contrast,contrastList(ii-1)}, (theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs))];
-                        oneBefore{2}{nn,3}{ss}{contrast,contrastList(ii-1)} = [oneBefore{2}{nn,3}{ss}{contrast,contrastList(ii-1)}, theRunPacket.response.metaData.lowFreqComponent(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)];
-                        end
-                        
+                   
+                    
+                    
                         % Conduct the fit
                     %[paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix, 'searchMethod','linearRegression');
                     [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix);
@@ -180,13 +174,37 @@ for nn = 1:length(normFlagStatus);
                     IAMPFitToData{ss,contrast}{1,ii}.modelResponseStruct=modelResponseStruct;
                     betaPerAmplitude{ss,contrast} = [betaPerAmplitude{ss,contrast} paramsFit.paramMainMatrix];
                     
-                    if ii == 1;
+                   
+                     % make results variable structured by result(subject, run, instance) for use with carryOver analysis
+                   
+                    
+                    if ff == 1;
+                        baselineSizeCarryOver(ss,rr,ii) = theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs);
+                        lowFreqCarryOver(ss,rr,ii) = theRunPacket.response.metaData.lowFreqComponent(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs);
+                        if nn == 1;
+                            betaRawCarryOver(ss,rr,ii) = paramsFit.paramMainMatrix;
+                        end
+                    
+                        if nn == 2;
+                            betaPercentCarryOver(ss,rr,ii) = paramsFit.paramMainMatrix;
+                        end
+                    end
+                    
+                    
+                    check = [check theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)-singlePacket.metaData.splitOffAnInstance.normValue];
+                    % store for oneBefore
+                        
+                        if ii == 1;
+                        else
+                            
+                        oneBefore{2}{nn,ff}{ss}{contrast,contrastList(ii-1)} = [oneBefore{2}{nn,ff}{ss}{contrast,contrastList(ii-1)}, (theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs))];
+                        oneBefore{2}{nn,3}{ss}{contrast,contrastList(ii-1)} = [oneBefore{2}{nn,3}{ss}{contrast,contrastList(ii-1)}, theRunPacket.response.metaData.lowFreqComponent(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)];
+                        end
+                         if ii == 1;
                         else
                             
                         oneBefore{1}{nn,ff}{ss}{contrast,contrastList(ii-1)} = [oneBefore{1}{nn,ff}{ss}{contrast,contrastList(ii-1)}, paramsFit.paramMainMatrix];
                     end
-                    
-                    check = [check theRunPacket.response.values(1,singlePacket.metaData.splitOffAnInstance.splitOnsetMsecs)-singlePacket.metaData.splitOffAnInstance.normValue];
                     
                 end % loop over events
             end % loop over stimulus types
