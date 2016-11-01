@@ -73,12 +73,15 @@ contrastList = {'25%', '50%', '100%', '200%', '400%'};
 if strcmp(inputname(2),'betaPercentCarryOver');
     yAxis = 'Percent Change (%)';
     save = 'percentChange';
-elseif strcmp(inputname(2), 'betaRawCarryOvery');
+elseif strcmp(inputname(2), 'betaRawCarryOver');
     yAxis = 'Raw Pupil Diameter (mm)';
     save = 'raw';
 elseif strcmp(inputname(2), 'baselineSizeCarryOver');
     yAxis = 'Baseline Pupil Diameter (mm)';
     save = 'baselineSize';
+elseif strcmp(inputname(2), 'lowFreqCarryOver');
+    yAxis = 'Low Frequency Component (mm)';
+    save = 'lowFreq';
 elseif strcmp(inputname(2), 'effectiveContrast_sessxrunxevent');
     yAxis = 'Effective Contrast (%)';
     save = 'effectiveContrast';
@@ -136,7 +139,8 @@ for s = subjectsLMS;
             end
         end
     % plot mean values
-    plot(1:5,meanResponseCellArray{1,s}(priorStimulus,1:5), 'Color', colorList(priorStimulus))
+    plot(1:5,meanResponseCellArray{1,s}(1:5,priorStimulus), 'Color', colorList(priorStimulus)) % note priorStimulus here is really current but just based on the order of the loops had to run it that way
+    
     end
     
     
@@ -176,7 +180,7 @@ for s = subjectsMel;
             end
         end
     % plot mean values
-    plot(1:5,meanResponseCellArray{1,s}(priorStimulus,1:5), 'Color', colorList(priorStimulus))
+    plot(1:5,meanResponseCellArray{1,s}(1:5,priorStimulus), 'Color', colorList(priorStimulus))
     end
     
     
