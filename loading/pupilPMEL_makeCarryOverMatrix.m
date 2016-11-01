@@ -44,9 +44,16 @@ for ss = 1:nSubjects; % loop over subjects
     end
 end
 
-% Create mean response value for a given current stimulus per subject
+% Create mean response value for a given current stimulus per subject. Also
+% create mean response value collapsed across all current stimulus types.
 for ss = 1:nSubjects;
-    meanResultsVariable{ss} = zeros(5,5);
+    meanResponseCellArray{ss} = zeros(5,5);
+    responseCellArrayCollapsed{ss}{1,1} = []
+    responseCellArrayCollapsed{ss}{2,1} = []
+    responseCellArrayCollapsed{ss}{3,1} = []
+    responseCellArrayCollapsed{ss}{4,1} = []
+    responseCellArrayCollapsed{ss}{5,1} = []
+    meanResponseCellArrayCollapsed{ss} = zeros(5,1)
 end
    
 
@@ -54,10 +61,15 @@ for ss = 1:nSubjects;
     for previousStimulus = 1:5;
         for currentStimulus = 1:5;
             meanResponseCellArray{ss}(previousStimulus,currentStimulus) = mean(theResponseCellArray{ss}{previousStimulus,currentStimulus});
+            responseCellArrayCollapsed{ss}{previousStimulus,1} = [responseCellArrayCollapsed{ss}{previousStimulus,1}, theResponseCellArray{ss}{previousStimulus,currentStimulus}]
         end
     end
 end
-
+for ss = 1:nSubjects;
+    for previousStimulus = 1:5;
+        meanResponseCellArrayCollapsed{ss}(previousStimulus,1) = mean(responseCellArrayCollapsed{ss}{previousStimulus,1});
+    end
+end
 
 %% Do some plotting
 
@@ -85,6 +97,9 @@ elseif strcmp(inputname(2), 'lowFreqCarryOver');
 elseif strcmp(inputname(2), 'effectiveContrast_sessxrunxevent');
     yAxis = 'Effective Contrast (%)';
     save = 'effectiveContrast';
+elseif strcmp(inputname(2), 'diff');
+    yAxis = 'Baseline Size with Low Frequency Component Removed';
+    save = 'baselineSizeFiltered';
 end
 
 
@@ -139,8 +154,8 @@ for s = subjectsLMS;
             end
         end
     % plot mean values
-    plot(1:5,meanResponseCellArray{1,s}(1:5,priorStimulus), 'Color', colorList(priorStimulus)) % note priorStimulus here is really current but just based on the order of the loops had to run it that way
-    
+    plot(1:5,meanResponseCellArray{1,s}(1:5,priorStimulus), 'Color', colorList(priorStimulus)); % note priorStimulus here is really current but just based on the order of the loops had to run it that way
+    plot(1:5,meanResponseCellArrayCollapsed{s}(1:5,1),'LineWidth', 2, 'Color', 'k');
     end
     
     
@@ -181,6 +196,7 @@ for s = subjectsMel;
         end
     % plot mean values
     plot(1:5,meanResponseCellArray{1,s}(1:5,priorStimulus), 'Color', colorList(priorStimulus))
+    plot(1:5,meanResponseCellArrayCollapsed{s}(1:5,1),'LineWidth', 2, 'Color', 'k');
     end
     
     
