@@ -119,6 +119,13 @@ for ss=1:nSessions
     % the different tpup parameter types. As we go, we plot the results in
     % a display figure so that we can evaluate the quality of the
     % interpolation.
+    
+    % fitTypes is a cellArray variable that holds the names of valid
+    % library models for the matlab 'fit' function. The list is here:
+    %  https://www.mathworks.com/help/curvefit/list-of-library-models-for-curve-and-surface-fitting.html
+    %
+    % Some options to consider include:
+    %   linearinterp, nearestinterp, cubicinterp, poly2, exp1, ...
     figParamHandle=figure('Name',['Model params, Session_' strtrim(num2str(ss))],'NumberTitle','off');
     fitTypes={'nearestinterp','nearestinterp','exp1',...
         'nearestinterp','exp1','nearestinterp','nearestinterp'};
