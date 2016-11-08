@@ -162,7 +162,7 @@ for nn = 1:length(normFlagStatus);
                     
                     
                         % Conduct the fit
-                    %[paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix, 'searchMethod','linearRegression');
+                   % [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix, 'searchMethod','linearRegression');
                     [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo,'paramLockMatrix',paramLockMatrix);
 
                     % Store the fitResponse
@@ -290,6 +290,8 @@ if isfield(mergedPacketCellArray{1}{1}.metaData, 'simulationStyle');
         simFileName = '_simulatedArousal';
     elseif strcmp(mergedPacketCellArray{1}{1}.metaData.simulationStyle, 'carryOver')
         simFileName = '_simulatedCarryOver';
+    elseif strcmp(mergedPacketCellArray{1}{1}.metaData.simulationStyle, 'attention')
+        simFileName = '_simulatedAttention';    
     
     end
 else
