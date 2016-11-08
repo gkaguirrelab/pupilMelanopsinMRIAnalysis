@@ -7,8 +7,8 @@ function [simulatedMergedPacketCellArray] = pupilPMEL_makeSimulatedData()
 % bit more constricted
 
 %lowFreq = 'arousal';
-lowFreq = 'carryOver'
-
+%lowFreq = 'carryOver'
+lowFreq = 'attention'
 
 
 %% Load template data, in this case the cached version of our main data set
@@ -119,14 +119,35 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
         % component, but for the first stimulus, we're starting
         % with a baseline size of 5mm
         
+        % if the low frequency component is attention, this corresponds to
+        % a model in which attention can manipulate both baseline pupil
+        % size and percentage change (outputed by the neuronalResponse
+        % function). More specifically, higher attention states are
+        % associated with increased baseline pupil size and increased
+        % percentage change
+        if strcmp(lowFreq, 'attention');
+            if ii == 1;
+                pre = 5;
+                neuronalResponseChangeFactor = 1;
+                attentionComponent = 0;
+            else
+                neuronalResponseChangeFactor = 1;
+                %attentionComponent = randi([0,1])*2 - 1; % randomly flip between high and low attentional states between trials
+                attentionComponent = sin(stimOnset*2*pi/44800); % baseline size fluctuates slowly between high and low attentional states
+                pre = 5 + attentionComponent;
+            end
+        end
+        
         if strcmp(lowFreq, 'arousal');
             if ii == 1;
                 pre = 5;
                 neuronalResponseChangeFactor = 1;
+                attentionComponent = 0;
             else
                 lowFreqComponent = -1 + (1+1).*rand(1,1);
                 pre = delta+lowFreqComponent;
                 neuronalResponseChangeFactor = 1;
+                attentionComponent = 0;
             end
         end
         
@@ -135,8 +156,10 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
             if ii == 1;
                 pre = 5;
                 neuronalResponseChangeFactor = 1;
+                attentionComponent = 0;
             else
                 pre = delta;
+                attentionComponent = 0;
             end
         end
         
@@ -148,7 +171,7 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
         % added a carry-over effect, where the neuronalResponse is changed
         % by the stimulus that came before. neuronalResponseChangeFactor is
         % defined below so that it applies to the stimuli that comes next.
-        neuronalResponse(stimOnset) = retinalResponse(stimOnset)/10 * pre / neuronalResponseChangeFactor;
+        neuronalResponse(stimOnset) = retinalResponse(stimOnset)/10 * 1 / neuronalResponseChangeFactor * (attentionComponent/5+1);
 
         % make the pupilMotor response. The input for pupilMotor is
         % the neuronalResponse vector and  "pre" pupil size and the output
@@ -162,10 +185,13 @@ for rr = 1:(size(mergedPacketCellArray{1},2)) % loop over runs
         
         % for now, when shown a stimulus, the pupil contrast by 2 times the
         % neuronalResponse
-        stimulated = (-2 * neuronalResponse(stimOnset)) + pre;
+        stimulated = (-2 * neuronalResponse(stimOnset)*pre) + pre;
         
         % pupilMotor functions differently depending on which lowFreq
         % component is specified
+        if strcmp(lowFreq, 'attention');
+            delta = pre;
+        end
         if strcmp(lowFreq, 'arousal');
             delta = pre;
         end
