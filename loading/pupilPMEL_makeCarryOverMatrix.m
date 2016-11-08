@@ -1,4 +1,4 @@
-function [ theResponseCellArray ] = pupilPMEL_makeCarryOverMatrix(mergedPacketCellArray, resultsVariable, dropboxAnalysisDir)
+function [ theResponseCellArray, meanResponseCellArray ] = pupilPMEL_makeCarryOverMatrix(mergedPacketCellArray, resultsVariable, dropboxAnalysisDir)
 
 subAnalysisDirectory='carryOver';
 
@@ -23,7 +23,7 @@ for ss = 1:nSubjects;
         end
     end
 end
-    
+
 
 for ss = 1:nSubjects; % loop over subjects
     nRuns = sum(resultsVariable(ss,:,1)~=0); % determine how many runs for that subject
@@ -48,20 +48,20 @@ end
 % create mean response value collapsed across all current stimulus types.
 for ss = 1:nSubjects;
     meanResponseCellArray{ss} = zeros(5,5);
-    responseCellArrayCollapsed{ss}{1,1} = []
-    responseCellArrayCollapsed{ss}{2,1} = []
-    responseCellArrayCollapsed{ss}{3,1} = []
-    responseCellArrayCollapsed{ss}{4,1} = []
-    responseCellArrayCollapsed{ss}{5,1} = []
-    meanResponseCellArrayCollapsed{ss} = zeros(5,1)
+    responseCellArrayCollapsed{ss}{1,1} = [];
+    responseCellArrayCollapsed{ss}{2,1} = [];
+    responseCellArrayCollapsed{ss}{3,1} = [];
+    responseCellArrayCollapsed{ss}{4,1} = [];
+    responseCellArrayCollapsed{ss}{5,1} = [];
+    meanResponseCellArrayCollapsed{ss} = zeros(5,1);
 end
-   
+
 
 for ss = 1:nSubjects;
     for previousStimulus = 1:5;
         for currentStimulus = 1:5;
             meanResponseCellArray{ss}(previousStimulus,currentStimulus) = mean(theResponseCellArray{ss}{previousStimulus,currentStimulus});
-            responseCellArrayCollapsed{ss}{previousStimulus,1} = [responseCellArrayCollapsed{ss}{previousStimulus,1}, theResponseCellArray{ss}{previousStimulus,currentStimulus}]
+            responseCellArrayCollapsed{ss}{previousStimulus,1} = [responseCellArrayCollapsed{ss}{previousStimulus,1}, theResponseCellArray{ss}{previousStimulus,currentStimulus}];
         end
     end
 end
@@ -121,10 +121,10 @@ if isfield(mergedPacketCellArray{1}{1}.metaData, 'simulationStyle');
         simFileName = '_simulatedArousal';
     elseif strcmp(mergedPacketCellArray{1}{1}.metaData.simulationStyle, 'carryOver')
         simFileName = '_simulatedCarryOver';
-    
+        
     end
 else
-        simFileName = '';
+    simFileName = '';
 end
 
 % Plot the LMS subjects
@@ -132,7 +132,7 @@ plotFig = figure;
 set(gca,'Xtick',[1 2 3 4 5],'XTickLabel',{'25%', '50%', '100%', '200%', '400%'})
 xlabel('Previous Stimuli')
 xlim([0 6])
-ylabel(yAxis) 
+ylabel(yAxis)
 
 for s = subjectsLMS;
     hold on
@@ -153,11 +153,10 @@ for s = subjectsLMS;
                 plot(x,y,'o', 'Color', colorList(currentStimulus));
             end
         end
-    % plot mean values
-    plot(1:5,meanResponseCellArray{1,s}(1:5,priorStimulus), 'Color', colorList(priorStimulus)); % note priorStimulus here is really current but just based on the order of the loops had to run it that way
-    plot(1:5,meanResponseCellArrayCollapsed{s}(1:5,1),'LineWidth', 2, 'Color', 'k');
+        % plot mean values
+        plot(1:5,meanResponseCellArray{1,s}(1:5,priorStimulus), 'Color', colorList(priorStimulus)); % note priorStimulus here is really current but just based on the order of the loops had to run it that way
+        plot(1:5,meanResponseCellArrayCollapsed{s}(1:5,1),'LineWidth', 2, 'Color', 'k');
     end
-    
     
 end
 
@@ -168,12 +167,24 @@ end
 saveas(plotFig, fullfile(outDir, ['LMS_carryOver_', save, simFileName, '.png']), 'png');
 close(plotFig);
 
+% make the carryOver matrix
+for s = subjectsLMS;
+    m = imagesc(meanResponseCellArray{s});
+    colorbar;
+    ylabel('Previous Stimulus');
+    xlabel('Current Stimulus');
+    title([yAxis, ' Subject: ', subjectKey{s}, ' Project: ', projectKey{s}])
+    saveas(m, fullfile(outDir, [subjectKey{s}, '_LMS_carryOverMatrix_', save, simFileName, '.png']), 'png');
+    close();
+end
+
+
 % Plot the Melanopsin subjects
 plotFig = figure;
 set(gca,'Xtick',[1 2 3 4 5],'XTickLabel',{'25%', '50%', '100%', '200%', '400%'})
 xlabel('Previous Stimuli')
 xlim([0 6])
-ylabel(yAxis) 
+ylabel(yAxis)
 
 for s = subjectsMel;
     hold on
@@ -194,11 +205,11 @@ for s = subjectsMel;
                 plot(x,y,'o', 'Color', colorList(currentStimulus));
             end
         end
-    % plot mean values
-    plot(1:5,meanResponseCellArray{1,s}(1:5,priorStimulus), 'Color', colorList(priorStimulus))
-    plot(1:5,meanResponseCellArrayCollapsed{s}(1:5,1),'LineWidth', 2, 'Color', 'k');
+        % plot mean values
+        plot(1:5,meanResponseCellArray{1,s}(1:5,priorStimulus), 'Color', colorList(priorStimulus))
+        plot(1:5,meanResponseCellArrayCollapsed{s}(1:5,1),'LineWidth', 2, 'Color', 'k');
     end
-    
+   
     
 end
 
@@ -208,3 +219,16 @@ if ~exist(outDir, 'dir')
 end
 saveas(plotFig, fullfile(outDir, ['Mel_carryOver_', save, simFileName, '.png']), 'png');
 close(plotFig);
+
+% make Mel carryOver matrix
+for s = subjectsMel;
+    m = imagesc(meanResponseCellArray{s});
+    colorbar;
+    ylabel('Previous Stimulus');
+    xlabel('Current Stimulus');
+    title([yAxis, ' Subject: ', subjectKey{s}, ' Project: ', projectKey{s}])
+    saveas(m, fullfile(outDir, [subjectKey{s}, '_Mel_carryOverMatrix_', save, simFileName, '.png']), 'png');
+    close();
+end
+
+end
