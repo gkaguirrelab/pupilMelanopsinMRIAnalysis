@@ -128,7 +128,7 @@ for ss=1:nSessions
     %   linearinterp, nearestinterp, cubicinterp, poly2, exp1, ...
     figParamHandle=figure('Name',['Model params, Session_' strtrim(num2str(ss))],'NumberTitle','off');
     fitTypes={'nearestinterp','nearestinterp','exp1',...
-        'nearestinterp','exp1','nearestinterp','nearestinterp'};
+        'nearestinterp','poly1','nearestinterp','nearestinterp'};
     
     for pp=1:nParams        
         % For each param, create a fitObject which is the fit of a function
