@@ -1,6 +1,6 @@
-function [FCONCovariateValues, FCONCovariateTimeseries, rsqLag, meanRsqLagCombined, xcorrMean] = correlateFCONWithBOLD(mergedPacketCellArray, dropboxAnalysisDir)
+function [FCONCovariateValues, FCONCovariateTimeseries, rsqLag, meanRsqLag, meanRsqLagCombined, xcorrMean] = correlateFCONWithBOLD(mergedPacketCellArray, dropboxAnalysisDir)
 
-subAnalysisDirectory = 'BOLD'
+subAnalysisDirectory = 'BOLD';
 
 %% For a given run, create a vector that represents the the difference (in
 % change units) between the FCON estimate of the response on that trial and
@@ -260,6 +260,7 @@ for ss = 1:3;
 end
 
 % actually doing the plotting
+% first average overall
 plotFig = figure;
 plot(lagRange*0.8,meanRsqLagCombined(1,:), 'Color', 'r')
 hold on
@@ -275,6 +276,25 @@ end
 saveas(plotFig, fullfile(outDir, ['correlateFCONWithBOLD' '.png']), 'png');
 close(plotFig);
 
+% second displaying per subject
+plotFig = figure;
+hold on
+for ss = 1:3;
+    for project = 1:2;
+        if project == 1;
+            adjustmentFactor = 0;
+            color = 'b';
+        elseif project == 2;
+            adjustmentFactor = 4;
+            color = 'r';
+        end
+        plot(lagRange*0.8,meanRsqLag(ss+adjustmentFactor,:), 'Color', color');
+    end
+end
+xlabel('Lag (s)');
+ylabel('Pearson Correlation Coeffcient');
+saveas(plotFig, fullfile(outDir, ['correlateFCONWithBOLD_perSubject' '.png']), 'png');
+close(plotFig);
 
 end % end function
 
