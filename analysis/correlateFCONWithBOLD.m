@@ -293,6 +293,7 @@ for ss = 1:3;
 end
 xlabel('Lag (s)');
 ylabel('Pearson Correlation Coeffcient');
+legend('LMS', 'Mel');
 saveas(plotFig, fullfile(outDir, ['correlateFCONWithBOLD_perSubject' '.png']), 'png');
 close(plotFig);
 
