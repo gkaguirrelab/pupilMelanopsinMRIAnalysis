@@ -41,7 +41,6 @@ function [myResultsVariable] = fitFCONModelToIndividualResponses(mergedPacketCel
 % model.
 %
 
-
 %% SETUP
 
 % Assign a name for this sub-analysis directory for saving plots and fits
@@ -51,6 +50,9 @@ if ~exist(outDir, 'dir')
     mkdir(outDir);
 end
 
+
+%% Hard-coded Parameters of the analysis
+
 % Define the split params - These parameters define how single instances of
 % response data are to be split off of the larger packet that contains the
 % response data from a scanning run.
@@ -58,6 +60,10 @@ splitParams.instanceIndex=[]; % will hold the instance index, added later
 splitParams.splitDurationMsecs=13000; % Grab 13 second windows
 splitParams.normFlag=3; % zero center the initial period, pct. change units
 splitParams.normalizationWindowMsecs=100; % define the size of the norm window
+
+% Define how far we wish to extend the modeled contrast range
+ExtendDown = 3;
+ExtendUp = 3;
 
 % Instantiate the TPUP model - This will later be sent to FCON to use as a
 % forward model. We also use it now to get information about the TPUP model params,
@@ -78,10 +84,11 @@ nParams=length(tpupModelDefaultParams.paramNameCell); % number of params in the 
 observedParamMatrix=zeros(nParams,nContrasts); % pre-allocate this for speed later
 
 % This is the expanded contrast that will be used for the interpolated
-% parameter matrix. The range of contrasts is extended by two binary
-% divisions above and below the original contrastBase.
+% parameter matrix. The range of contrasts is extended above and below the
+% original contrastBase by numbner of log-spaced contrast steps in 
+% ExtendDown and ExtendUp.
 interpContrastBase = ...
-    logspace(log10(min(contrastBase)/2/2),log10(max(contrastBase)*2*2),(nContrasts+4)*100);
+    logspace(log10(min(contrastBase)/(2^ExtendDown)),log10(max(contrastBase)*(2^ExtendUp)),(nContrasts+ExtendDown+ExtendUp)*100);
 
 % fmincon search is performed by gradient descent. It will become stuck if
 % small changes in the parameter (effective contrast) do not produce any
