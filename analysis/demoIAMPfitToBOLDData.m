@@ -55,7 +55,24 @@ hold on
 plot(thePacket.response.timebase,thePacket.response.values)
 
 % dump out the estimated percent signal change for each trial
-paramsFit.paramMainMatrix
-
+theResult(pp,:)=paramsFit.paramMainMatrix;
+theTrials(pp,:)=thePacket.stimulus.metaData.stimTypes;
 end % loop over packets
+
+% Aggregate data across trial types
+for i=1:6
+idx=find(theTrials==i);
+meanResponseVal(i)=mean(mean(theResult(idx)));
+semResponseVal(i)=std(theResult(idx))/sqrt(length(idx));
+end
+
+figure
+plot(meanResponseVal(1:5)*100,'-k');
+hold on
+plot(meanResponseVal(1:5)*100+semResponseVal(1:5)*100,'Color',[0.5 0.5 0.5]);
+plot(meanResponseVal(1:5)*100-semResponseVal(1:5)*100,'Color',[0.5 0.5 0.5]);
+plot(meanResponseVal(1:5)*100,'ro');
+
+
+
 
