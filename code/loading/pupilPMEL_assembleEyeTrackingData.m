@@ -1,4 +1,4 @@
-function pupilPMEL_assembleGazeData()
+function pupilPMEL_assembleEyeTrackingData()
 
 
 %% Load template data, in this case the cached version of our main data set
@@ -15,7 +15,7 @@ dropboxAnalysisDir = ...
 %    'make' - load and process stim/response files, save the packets
 %    'load' - load the packets from the passed hash name
 packetCacheBehavior='make';
-packetCellArrayTag='maxMelLSM_CRF_Pupil';
+packetCellArrayTag='maxMelLMS_CRF_Pupil';
 packetCellArrayHash='d702e5898732600707fb32a2302d4772';
 
 %% Create or load the packetCellArray
@@ -24,7 +24,7 @@ switch packetCacheBehavior
     case 'make'  % If we are not to load the mergedPacketCellArray, then we must generate it
         
         % Make the packetCellArray
-        [ mergedPacketCellArray ] = gaze_pupilPMEL_makeMergedPacketCellArray( userName );
+        [ mergedPacketCellArray ] = pupilPMEL_makeMergedPacketCellArray( userName );
         
         % calculate the hex MD5 hash for the packetCellArray
         packetCellArrayHash = DataHash(mergedPacketCellArray);
