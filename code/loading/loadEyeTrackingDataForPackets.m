@@ -1,5 +1,10 @@
-function [Data_LiveTrack_PupilDiameter_FineMasterTime TimeVectorFine Data_LiveTrack_PupilDiameter_FineMasterTime_LowFreqComponent] = loadPupilDataForPackets(params)
-% values = loadPupilDataForPackets(input_dir, stimulus, params)
+function [values time] = loadEyeTrackingDataForPackets(params, whichMeasure)
+% values = loadEyeTrackingDataForPackets(input_dir, stimulus, params)
+
+% Assume pupil is default
+if isempty(whichMeasure)
+    whichMeasure = 'pupil';
+end
 
 %% STIMULUS VALUES
 Data_Stimulus = load(params.stimulusFile);
@@ -24,7 +29,15 @@ tmpIdx = strfind(Data_LiveTrack_TTLPulses_raw, [1 1]);
 Data_LiveTrack_TTLPulses_raw(tmpIdx) = 0;
 
 Data_LiveTrack_TTLPulses = [];
-Data_LiveTrack_PupilDiameter = [];
+
+switch whichMeasure
+    case 'pupil'
+        Data_LiveTrack_PupilDiameter = [];
+    case 'gazeX'
+        Data_LiveTrack_GazeX = [];
+    case 'gazeY'
+        Data_LiveTrack_GazeY = [];
+end
 Data_LiveTrack_IsTracked = [];
 % We reconstruct the data set collected at 30/60 Hz.
 for rr = 1:length(Data_LiveTrack.params.Report)
@@ -34,9 +47,16 @@ for rr = 1:length(Data_LiveTrack.params.Report)
         case 60
             Data_LiveTrack_TTLPulses = [Data_LiveTrack_TTLPulses Data_LiveTrack_TTLPulses_raw(rr) 0];
             
-            % We use the pupil width as the index of pupil diameter
-            Data_LiveTrack_PupilDiameter = [Data_LiveTrack_PupilDiameter Data_LiveTrack.params.Report(rr).PupilWidth_Ch01/calibrationFactor ...
-                Data_LiveTrack.params.Report(rr).PupilWidth_Ch02/calibrationFactor];
+            switch whichMeasure
+                case 'pupil'
+                    % We use the pupil width as the index of pupil diameter
+                    Data_LiveTrack_PupilDiameter = [Data_LiveTrack_PupilDiameter Data_LiveTrack.params.Report(rr).PupilWidth_Ch01/calibrationFactor ...
+                        Data_LiveTrack.params.Report(rr).PupilWidth_Ch02/calibrationFactor];
+                case 'gazeX'
+                    Data_LiveTrack_GazeX = [Data_LiveTrack_GazeX Data_LiveTrack.params.Report(rr).Glint1CameraX_Ch01 Data_LiveTrack.params.Report(rr).Glint1CameraX_Ch02];
+                case 'gazeY'
+                    Data_LiveTrack_GazeY = [Data_LiveTrack_GazeY Data_LiveTrack.params.Report(rr).Glint1CameraY_Ch01 Data_LiveTrack.params.Report(rr).Glint1CameraY_Ch02];
+            end
             
             % Special case
             if strcmp(params.sessionDate, '060616') && strcmp(params.sessionObserver, 'HERO_gka1');
@@ -48,9 +68,15 @@ for rr = 1:length(Data_LiveTrack.params.Report)
             end
         case 30
             Data_LiveTrack_TTLPulses = [Data_LiveTrack_TTLPulses Data_LiveTrack_TTLPulses_raw(rr)];
-            Data_LiveTrack_PupilDiameter = [Data_LiveTrack_PupilDiameter Data_LiveTrack.params.Report(rr).LeftPupilWidth/calibrationFactor];
+            switch whichMeasure
+                case 'pupil'
+                    Data_LiveTrack_PupilDiameter = [Data_LiveTrack_PupilDiameter Data_LiveTrack.params.Report(rr).LeftPupilWidth/calibrationFactor];
+                case 'gazeX'
+                    Data_LiveTrack_GazeX = [Data_LiveTrack_GazeX Data_LiveTrack.params.Report(rr).LeftGlint1CameraX];
+                case 'gazeY'
+                    Data_LiveTrack_GazeY = [Data_LiveTrack_GazeY Data_LiveTrack.params.Report(rr).LeftGlint1CameraY];
+            end
             Data_LiveTrack_IsTracked = [Data_LiveTrack_IsTracked Data_LiveTrack.params.Report(rr).PupilTracked];
-            
     end
 end
 
@@ -66,8 +92,17 @@ TimeVectorLinear(isnan(TimeVectorLinear)) = interp1(tmpX(~isnan(TimeVectorLinear
     TimeVectorLinear(~isnan(TimeVectorLinear)), tmpX(isnan(TimeVectorLinear)), 'linear', 'extrap');
 
 % Resample the timing to 1 msecs sampling
-Data_LiveTrack_PupilDiameter_FineMasterTime = interp1(TimeVectorLinear*params.TRDurSecs*1000, ...
-    Data_LiveTrack_PupilDiameter, TimeVectorFine);
+switch whichMeasure
+    case 'pupil'
+        Data_LiveTrack_PupilDiameter_FineMasterTime = interp1(TimeVectorLinear*params.TRDurSecs*1000, ...
+            Data_LiveTrack_PupilDiameter, TimeVectorFine);
+    case 'gazeX'
+        Data_LiveTrack_GazeX_FineMasterTime = interp1(TimeVectorLinear*params.TRDurSecs*1000, ...
+            Data_LiveTrack_GazeX, TimeVectorFine);
+    case 'gazeY'
+        Data_LiveTrack_GazeY_FineMasterTime = interp1(TimeVectorLinear*params.TRDurSecs*1000, ...
+            Data_LiveTrack_GazeY, TimeVectorFine);
+end
 Data_LiveTrack_IsTracked_FineMasterTime = interp1(TimeVectorLinear*params.TRDurSecs*1000, ...
     Data_LiveTrack_IsTracked, TimeVectorFine, 'nearest'); % Use NN interpolation for the binary tracking state
 
@@ -114,11 +149,25 @@ Data_LiveTrack_BlinkIdx(Data_LiveTrack_BlinkIdx < 1) = []; %% ALSO CUT THE BLINK
 % Remove any blinks after the last sample
 Data_LiveTrack_BlinkIdx(Data_LiveTrack_BlinkIdx > length(Data_LiveTrack_IsTracked_FineMasterTime)) = []; %% ALSO CUT THE BLINKING OFF AT THE END
 Data_LiveTrack_BlinkIdx = unique(Data_LiveTrack_BlinkIdx);
-Data_LiveTrack_PupilDiameter_FineMasterTime(Data_LiveTrack_BlinkIdx) = NaN;
 
-% Interpolate the elements
-Data_LiveTrack_PupilDiameter_FineMasterTime(isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)) = interp1(TimeVectorFine(~isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)), Data_LiveTrack_PupilDiameter_FineMasterTime(~isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)), TimeVectorFine(isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)));
-% Get the DC
+switch whichMeasure
+    case 'pupil'
+        Data_LiveTrack_PupilDiameter_FineMasterTime(Data_LiveTrack_BlinkIdx) = NaN;
+        % Interpolate the elements
+        Data_LiveTrack_PupilDiameter_FineMasterTime(isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)) = interp1(TimeVectorFine(~isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)), Data_LiveTrack_PupilDiameter_FineMasterTime(~isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)), TimeVectorFine(isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)));
+        % Write the output values
+        values = Data_LiveTrack_PupilDiameter_FineMasterTime;
+    case 'gazeX'
+        Data_LiveTrack_GazeX_FineMasterTime(Data_LiveTrack_BlinkIdx) = NaN;
+        Data_LiveTrack_GazeX_FineMasterTime(isnan(Data_LiveTrack_GazeX_FineMasterTime)) = interp1(TimeVectorFine(~isnan(Data_LiveTrack_GazeX_FineMasterTime)), Data_LiveTrack_GazeX_FineMasterTime(~isnan(Data_LiveTrack_GazeX_FineMasterTime)), TimeVectorFine(isnan(Data_LiveTrack_GazeX_FineMasterTime)));
+        values = Data_LiveTrack_GazeX_FineMasterTime;
+    case 'gazeY'
+        Data_LiveTrack_GazeY_FineMasterTime(Data_LiveTrack_BlinkIdx) = NaN;
+        Data_LiveTrack_GazeY_FineMasterTime(isnan(Data_LiveTrack_GazeY_FineMasterTime)) = interp1(TimeVectorFine(~isnan(Data_LiveTrack_GazeY_FineMasterTime)), Data_LiveTrack_GazeY_FineMasterTime(~isnan(Data_LiveTrack_GazeY_FineMasterTime)), TimeVectorFine(isnan(Data_LiveTrack_GazeY_FineMasterTime)));
+        values = Data_LiveTrack_GazeY_FineMasterTime;
+end
+
+time = TimeVectorFine;
 
 %%
 % For now, we want to look at relationship between baseline pupil size and
@@ -126,21 +175,24 @@ Data_LiveTrack_PupilDiameter_FineMasterTime(isnan(Data_LiveTrack_PupilDiameter_F
 % is to add a final line that defines values without manipulating by the
 % filtered component
 
-% Low-pass filter the pupil data
-% Set up filter properties
-nHarmonicsToFilter = round(...    % Take the closeset integer number of frequencies
-                 ((max(TimeVectorFine)+1)/1000.)/ ... % Total duration of the data in seconds (assuming a deltaT of 1 msec)
-                 (1/params.lowFreqFilterHz));  % the boundary low frequency
-
-for ii = 1:nHarmonicsToFilter
-    X(2*ii-1,:) = sin(linspace(0, 2*pi*ii, size(TimeVectorFine, 2)));
-    X(2*ii,:) = cos(linspace(0, 2*pi*ii, size(TimeVectorFine, 2)));
+switch whichMeasure
+    case 'pupillowfreq'
+        % Low-pass filter the pupil data
+        % Set up filter properties
+        nHarmonicsToFilter = round(...    % Take the closeset integer number of frequencies
+            ((max(TimeVectorFine)+1)/1000.)/ ... % Total duration of the data in seconds (assuming a deltaT of 1 msec)
+            (1/params.lowFreqFilterHz));  % the boundary low frequency
+        
+        for ii = 1:nHarmonicsToFilter
+            X(2*ii-1,:) = sin(linspace(0, 2*pi*ii, size(TimeVectorFine, 2)));
+            X(2*ii,:) = cos(linspace(0, 2*pi*ii, size(TimeVectorFine, 2)));
+        end
+        X(nHarmonicsToFilter*2+1,:) = ones(1,size(TimeVectorFine, 2)); % create an intercept term
+        
+        % Filter it
+        [b, bint, r] = regress(Data_LiveTrack_PupilDiameter_FineMasterTime',X');
+        
+        % Obtain the low-frequency component
+        Data_LiveTrack_PupilDiameter_FineMasterTime_LowFreqComponent = (X'*b)';
+        values = Data_LiveTrack_PupilDiameter_FineMasterTime_LowFreqComponent;
 end
-X(nHarmonicsToFilter*2+1,:) = ones(1,size(TimeVectorFine, 2)); % create an intercept term
-
-% Filter it
-[b, bint, r] = regress(Data_LiveTrack_PupilDiameter_FineMasterTime',X');
-
-% Obtain the low-frequency component
-Data_LiveTrack_PupilDiameter_FineMasterTime_LowFreqComponent = (X'*b)';
-
