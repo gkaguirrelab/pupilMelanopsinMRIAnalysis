@@ -68,6 +68,6 @@ for ii = 1:length(uniqueConditions)
         tmp = strsplit(stimulus.metaData.params.modulationFiles, ',');
         tmp = strsplit(tmp{uniqueConditions(ii, 1)}, '-');
         [~, tmp2] = fileparts(tmp{3});
-        metaData.stimLabels{ii} = [tmp{2} '_' tmp2 '_' num2str(100*stimulus.metaData.params.theContrastsPct(uniqueConditions(ii, 3))*stimulus.metaData.params.theContrastMax) '%']
+        metaData.stimLabels{ii} = [tmp{2} '_' tmp2 '_' num2str(100*stimulus.metaData.params.theContrastsPct(uniqueConditions(ii, 3))*stimulus.metaData.params.theContrastMax) '%'];
     end
 end
