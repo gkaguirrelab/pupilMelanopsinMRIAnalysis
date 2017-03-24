@@ -1,9 +1,9 @@
-function [ ] = plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir )
+function [ ] = pupilPMEL_plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir )
 % Create plots of average evoked pupil responses within and across subjects
 
 %% GET THE AVERAGE PACKETS
 normFlag=3; % zero center the initial period, % change units
-[ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray, normFlag, 'lowFreqClean', true, 'aggregateMethod', 'median');
+[ avgPackets ] = pupilPMEL_makeAverageResponsePackets( mergedPacketCellArray, normFlag, 'lowFreqClean', true, 'aggregateMethod', 'mean');
 
 %% Plot the within-subject data
 NSessionsMerged=size(mergedPacketCellArray,2);
@@ -12,22 +12,21 @@ NStimTypes=6;
 % Assign a name for this sub-analysis directory for saving plots and fits
 subAnalysisDirectory='fitTPUPModelToAverageResponse';
 
+        
+
+    
+    
 for ss = 1:NSessionsMerged
-    plotFig = figure;
+    figHandle = figure;
+    subplotHandle=subplot(1,1,1);
     for mm = 1:NStimTypes
-        plot([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)], [0 0], '-k'); hold on;
         % plot a model fit if it is available
         if isfield(twoComponentFitToData{ss,mm}, 'modelResponseStruct')
-            plot(twoComponentFitToData{ss, mm}.modelResponseStruct.timebase, 100*twoComponentFitToData{ss,mm}.modelResponseStruct.values,'--k');
+         pupilPMEL_PlotEvokedResponse( subplotHandle, avgPackets{ss, mm}.response.timebase, 100*avgPackets{ss, mm}.response.values, 100*avgPackets{ss, mm}.response.sem, 'dataOnly', false, 'ylim', [-50 50], 'xAxisAspect', 1, 'yAxisAspect', 2, 'lineColor', [0.5 0.5 0.5]);%, 'plotTitle', [eventResponseStruct.metaData.subjectName ' ±SEM runs [' num2str(runCount) '] - w/subject scaler']);
+hold on
+         pupilPMEL_PlotEvokedResponse( subplotHandle, avgPackets{ss, mm}.response.timebase, twoComponentFitToData{ss,mm}.modelResponseStruct.values, [], 'dataOnly', false, 'ylim', [-50 50], 'xAxisAspect', 1, 'yAxisAspect', 2, 'lineColor', [1 0 0]);%, 'plotTitle', [eventResponseStruct.metaData.subjectName ' ±SEM runs [' num2str(runCount) '] - w/subject scaler']);
         end
-        plot(avgPackets{ss, mm}.response.timebase, 100*avgPackets{ss, mm}.response.values);
-        xlim([avgPackets{ss, mm}.response.timebase(1) avgPackets{ss, mm}.response.timebase(end)]);
     end
-    ylim(100*[-0.5 0.5]);
-    pbaspect([1 1 1]);
-    xlabel('Time [msecs]');
-    ylabel('Amplitude [%]');
-    adjustPlot(plotFig);
     title({ mergedPacketCellArray{ss}{1}.metaData.projectName, strrep(mergedPacketCellArray{ss}{1}.metaData.subjectName, '_', '\_')});
     
     % Save the plot. If the saving directory doesn't exist, create it.
@@ -35,8 +34,8 @@ for ss = 1:NSessionsMerged
     if ~exist(outDir, 'dir')
         mkdir(outDir);
     end
-    saveas(plotFig, fullfile(outDir, [mergedPacketCellArray{ss}{1}.metaData.projectName '.pdf']), 'pdf');
-    close(plotFig);
+    saveas(figHandle, fullfile(outDir, [mergedPacketCellArray{ss}{1}.metaData.projectName '.pdf']), 'pdf');
+    close(figHandle);
 end
 
 %% Plot the across-subject data LMS
@@ -46,7 +45,7 @@ sessionTypeColor(1,:,:)=[0.5 0.5 0.5; 0.625 0.375 0.375; 0.75 0.25 0.25; 0.875 0
 sessionTypeColor(2,:,:)=[0.5 0.5 0.5; 0.375 0.375 0.625; 0.25 0.25 0.75; 0.125 0.125 0.875; 0 0 1; ];
 
 for pp=1:length(sessionTypes)
-    plotFig = figure;
+    figHandle = figure;
     plot([avgPackets{sessionSets(pp,1), 1}.response.timebase(1) avgPackets{sessionSets(pp,1), 1}.response.timebase(end)], [0 0], '-k');
     hold on
     acrossSubjectResponseMatrix=[];
@@ -70,14 +69,14 @@ for pp=1:length(sessionTypes)
     pbaspect([1 1 1]);
     xlabel('Time [msecs]');
     ylabel('Amplitude [%]');
-    adjustPlot(plotFig);
+    adjustPlot(figHandle);
     title(['Average subject response - ' sessionTypes{pp}]);
     hold off
 
     % Save the plot.
     outFileName = fullfile(dropboxAnalysisDir,subAnalysisDirectory,['AcrossSubject_' sessionTypes{pp} '.pdf']);
-    saveas(plotFig, outFileName, 'pdf');
-    close(plotFig);
+    saveas(figHandle, outFileName, 'pdf');
+    close(figHandle);
 
 end % Loop over session sets (Mel and LMS)
 

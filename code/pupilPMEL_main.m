@@ -51,10 +51,6 @@ switch packetCacheBehavior
 end
 
 
-%% Fit IAMP model to individual events
-%fprintf('>> Fitting IAMP model to individual responses\n');
-%[~] = fitIAMPModelToIndividualResponse(mergedPacketCellArray, avgPackets, dropboxAnalysisDir);
-
 %% Fit TPUP model to avg packets
 twoComponentFitToData = ...
     fitTPUPModelToAverageResponse(...
@@ -62,15 +58,15 @@ twoComponentFitToData = ...
     dropboxAnalysisDir);
 
 %% Plot the average pupil responses
-plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir )
+pupilPMEL_plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir )
 
-%% Fit FCON model to individual events
-[myResultsVariable] = ...
-    fitFCONModelToIndividualResponses(mergedPacketCellArray, ...
-    twoComponentFitToData, ...
-    dropboxAnalysisDir);
-
-% plot FCON results
-plotFCONResults(mergedPacketCellArray, dropboxAnalysisDir, myResultsVariable);
-
+% %% Fit FCON model to individual events
+% [myResultsVariable] = ...
+%     fitFCONModelToIndividualResponses(mergedPacketCellArray, ...
+%     twoComponentFitToData, ...
+%     dropboxAnalysisDir);
+% 
+% % plot FCON results
+% plotFCONResults(mergedPacketCellArray, dropboxAnalysisDir, myResultsVariable);
+% 
 

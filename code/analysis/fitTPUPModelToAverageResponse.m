@@ -41,9 +41,16 @@ for ss = 1:NSessionsMerged
         % Grab a single packet
         singlePacket=avgPackets{ss, mm};
         
+        % Scale the responses by 100 so that the fit params have roughly
+        % equal weight in the minimization. This places the values in %
+        % change units
+        singlePacket.response.values=singlePacket.response.values*100;
+        
         % Conduct the fit
-        [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, 'defaultParamsInfo', defaultParamsInfo, ...
-            'paramLockMatrix',paramLockMatrix);
+        [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, ...
+            'defaultParamsInfo', defaultParamsInfo);
+        
+        paramsFit.paramMainMatrix
         
         % Store the fitResponse
         twoComponentFitToData{ss,mm}.paramsFit=paramsFit;

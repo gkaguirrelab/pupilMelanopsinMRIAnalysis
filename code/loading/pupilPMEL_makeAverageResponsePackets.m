@@ -80,15 +80,17 @@ for ss = 1:NSessions
     end % loop over runs
     
     % Take the nanmean of the matrix of values for each simulus/response
-    for cc=1:length(stimTypeCounter)
-        if ~stimTypeCounter(cc)==0
+    for kk=1:length(stimTypeCounter)
+        if ~stimTypeCounter(kk)==0
             switch (p.Results.aggregateMethod)
                 case 'mean'
-                    avgPackets{ss,cc}.response.values = nanmean(avgPackets{ss,cc}.response.values);
-                    avgPackets{ss,cc}.stimulus.values = nanmean(avgPackets{ss,cc}.stimulus.values);
+                    avgPackets{ss,kk}.response.sem = nanstd(avgPackets{ss,kk}.response.values) / sqrt(size(avgPackets{ss,kk}.response.values,1));
+                    avgPackets{ss,kk}.response.values = nanmean(avgPackets{ss,kk}.response.values);
+                    avgPackets{ss,kk}.stimulus.values = nanmean(avgPackets{ss,kk}.stimulus.values);
                 case 'median'
-                    avgPackets{ss,cc}.response.values = nanmedian(avgPackets{ss,cc}.response.values);
-                    avgPackets{ss,cc}.stimulus.values = nanmedian(avgPackets{ss,cc}.stimulus.values);
+                    avgPackets{ss,kk}.response.sem = nanstd(avgPackets{ss,kk}.response.values) / sqrt(size(avgPackets{ss,kk}.response.values,1));
+                    avgPackets{ss,kk}.response.values = nanmedian(avgPackets{ss,kk}.response.values);
+                    avgPackets{ss,kk}.stimulus.values = nanmedian(avgPackets{ss,kk}.stimulus.values);
                 otherwise
                     error('Unknown aggregation method requested');
             end % switch aggregateMethod
