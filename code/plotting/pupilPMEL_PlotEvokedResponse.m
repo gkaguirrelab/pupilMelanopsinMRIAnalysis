@@ -36,6 +36,9 @@ switch p.Results.xUnits
         error('That is not an xUnits that I know');
 end
 
+% Plot a reference line
+
+
 % Plot the primary function
 plot(plotHandle, timebase/timeDivisor,meanResponse,'Color',p.Results.lineColor,'LineWidth',p.Results.lineWidth);
 hold(plotHandle,'on');

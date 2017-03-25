@@ -19,7 +19,7 @@ dropboxAnalysisDir = ...
 % Define packetCacheBehavior. Options include:
 %    'make' - load and process stim/response files, save the packets
 %    'load' - load the packets from the passed hash name
-packetCacheBehavior='load';
+packetCacheBehavior='make';
 packetCellArrayTag='maxMelLSM_CRF_Pupil';
 packetCellArrayHash='d702e5898732600707fb32a2302d4772';
 
