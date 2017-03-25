@@ -63,11 +63,16 @@ conditionArray = [stimulus.metaData.params.theDirections' stimulus.metaData.para
 metaData.stimTypes = idx;
 for ii = 1:length(uniqueConditions)
     if ~(stimulus.metaData.params.theFrequenciesHz == -1)
+        error('This code can only handle stimulus pulses');
         % Fill out here
     else
-        tmp = strsplit(stimulus.metaData.params.modulationFiles, ',');
-        tmp = strsplit(tmp{uniqueConditions(ii, 1)}, '-');
-        [~, tmp2] = fileparts(tmp{3});
-        metaData.stimLabels{ii} = [tmp{2} '_' tmp2 '_' num2str(100*stimulus.metaData.params.theContrastsPct(uniqueConditions(ii, 3))*stimulus.metaData.params.theContrastMax) '%'];
+        if uniqueConditions(ii,1) == 1 % This is a stimulus trial
+            tmp = strsplit(stimulus.metaData.params.modulationFiles, ',');
+            tmp = strsplit(tmp{uniqueConditions(ii, 1)}, '-');
+            [~, tmp2] = fileparts(tmp{3});
+            metaData.stimLabels{ii} = [tmp{2} '_' tmp2 '_' num2str(100*stimulus.metaData.params.theContrastsPct(ii)*stimulus.metaData.params.theContrastMax) '%'];
+        else % This is a dimming (i.e., attention) trial
+            metaData.stimLabels{ii} = [tmp{2} '_' tmp2 '_DimmingEvent'];
+        end
     end
 end
