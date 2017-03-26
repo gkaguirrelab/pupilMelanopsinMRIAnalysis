@@ -10,6 +10,7 @@ p.addRequired('meanResponse',@isnumeric);
 p.addRequired('errorResponse',@isnumeric);
 p.addParameter('lineColor',[1 1 1],@isnumeric);
 p.addParameter('lineWidth',0.5,@isnumeric);
+p.addParameter('lineStyle','-',@ischar);
 p.addParameter('plotTitle','title here',@ischar);
 p.addParameter('ylim',[-0.5 2],@isnumeric);
 p.addParameter('xTick',2,@isnumeric);
@@ -40,7 +41,7 @@ end
 
 
 % Plot the primary function
-plot(plotHandle, timebase/timeDivisor,meanResponse,'Color',p.Results.lineColor,'LineWidth',p.Results.lineWidth);
+plot(plotHandle, timebase/timeDivisor,meanResponse,'Color',p.Results.lineColor,'LineStyle',p.Results.lineStyle,'LineWidth',p.Results.lineWidth);
 hold(plotHandle,'on');
 
 % Plot error bounds if this was passed

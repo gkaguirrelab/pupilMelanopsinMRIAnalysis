@@ -21,7 +21,7 @@ packetCacheBehavior='load';
 packetCacheTag='maxMelLSM_CRF_Pupil';
 packetCacheHash='82a4db868b14431c9c4cc65795a2c58d';
 
-fitTPUPCacheBehavior='load';
+fitTPUPCacheBehavior='make';
 fitTPUPCacheTag='TPUPModelFits';
 fitTPUPCacheHash='1b052ee837c7576303b4f88053491300';
 

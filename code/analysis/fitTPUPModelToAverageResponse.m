@@ -8,12 +8,8 @@ normFlag=3; % zero center the initial period, % change units
 
 % Identify the number of (sessions x subjects) and the number of stimulus
 % types from the dimensionality of the avgPackets cell array
-
 NSessionsMerged=size(avgPackets,1);
 NStimTypes=size(avgPackets,2);
-
-% Define a parameter lock matrix, which in this case is empty
-paramLockMatrix = [];
 
 % We will fit each average response as a single stimulus in a packet, so
 % each packet therefore contains a single stimulus instance.
@@ -30,7 +26,7 @@ twoComponentFitToData{NSessionsMerged,NStimTypes}.fitResponse=[];
 % Loop over subjects and stimulus types
 % Skipping the attention task for now
 for ss = 1:NSessionsMerged
-    for mm = 1:NStimTypes-1
+    for mm = 1:NStimTypes-1 % Don't try to fit the attention task
         % Update the user
         fprintf('* Subject, stimulus <strong>%g</strong> , <strong>%g</strong>', ss, mm);
         fprintf('\n');
@@ -49,6 +45,20 @@ for ss = 1:NSessionsMerged
         % Conduct the fit
         [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, ...
             'defaultParamsInfo', defaultParamsInfo);
+        
+        % Store the time-series for each of the three model components
+        tmpParams=paramsFit;
+        tmpParams.paramMainMatrix(5:6)=0;
+        tmp = temporalFit.computeResponse(tmpParams,singlePacket.stimulus,[]);
+        modelResponseStruct.component1=tmp.values;
+        tmpParams=paramsFit;
+        tmpParams.paramMainMatrix([4 6])=0;
+        tmp = temporalFit.computeResponse(tmpParams,singlePacket.stimulus,[]);
+        modelResponseStruct.component2=tmp.values;
+        tmpParams=paramsFit;
+        tmpParams.paramMainMatrix(4:5)=0;
+        tmp = temporalFit.computeResponse(tmpParams,singlePacket.stimulus,[]);
+        modelResponseStruct.component3=tmp.values;
         
         paramsFit.paramMainMatrix
         
