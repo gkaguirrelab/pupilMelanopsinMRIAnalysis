@@ -42,9 +42,15 @@ for ss = 1:NSessionsMerged
         % change units
         singlePacket.response.values=singlePacket.response.values*100;
         
+        % Use the sem of the response to create a errorWeightVector
+        % Increase the importance of fitting the first five seconds of data
+        errorWeightVector=1./(100*singlePacket.response.sem);
+        errorWeightVector(1:5000)=errorWeightVector(1:5000)*5;
+        
         % Conduct the fit
         [paramsFit,fVal,modelResponseStruct] = temporalFit.fitResponse(singlePacket, ...
-            'defaultParamsInfo', defaultParamsInfo);
+            'defaultParamsInfo', defaultParamsInfo, ...
+            'errorWeightVector', errorWeightVector);
         
         % Store the time-series for each of the three model components
         tmpParams=paramsFit;
