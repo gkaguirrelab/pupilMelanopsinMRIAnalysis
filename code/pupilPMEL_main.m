@@ -23,7 +23,7 @@ packetCacheHash='82a4db868b14431c9c4cc65795a2c58d';
 
 fitTPUPCacheBehavior='make';
 fitTPUPCacheTag='TPUPModelFits';
-fitTPUPCacheHash='1b052ee837c7576303b4f88053491300';
+fitTPUPCacheHash='b2bd2f43419d0ef28f985fe91a8f0957';
 
 
 %% Create or load the packetCellArray
@@ -68,6 +68,9 @@ end
 
 %% Plot the average pupil responses
 pupilPMEL_plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir )
+pupilPMEL_plotTPUPComponentCRF( twoComponentFitToData, dropboxAnalysisDir )
+
+
 
 % %% Fit FCON model to individual events
 % [myResultsVariable] = ...
