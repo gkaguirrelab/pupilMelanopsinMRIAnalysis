@@ -21,7 +21,7 @@ packetCacheBehavior='load';
 packetCacheTag='maxMelLSM_CRF_Pupil';
 packetCacheHash='82a4db868b14431c9c4cc65795a2c58d';
 
-fitTPUPCacheBehavior='make';
+fitTPUPCacheBehavior='load';
 fitTPUPCacheTag='TPUPModelFits';
 fitTPUPCacheHash='b2bd2f43419d0ef28f985fe91a8f0957';
 
@@ -68,7 +68,7 @@ end
 
 %% Plot the average pupil responses
 pupilPMEL_plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir )
-pupilPMEL_plotTPUPComponentCRF( twoComponentFitToData, dropboxAnalysisDir )
+%pupilPMEL_plotTPUPComponentCRF( twoComponentFitToData, dropboxAnalysisDir )
 
 
 
