@@ -122,7 +122,7 @@ paramLabels=twoComponentFitToData{1,1}.paramsFit.paramNameCell;
 paramYLimLower=[0 0 0 -25 -50 -100];
 paramYLimUpper=[300 300 30 0 0 0];
 yDirSettings={'normal','normal','normal','reverse','reverse','reverse'};
-yLabels={'msecs','msecs','seconds','area [%change/secs]','area [%change/secs]','area [%change/secs]'};
+yLabels={'msecs','msecs','seconds','area [%change * secs]','area [%change * secs]','area [%change * secs]'};
 
 figHandle = figure;
 set(gcf, 'PaperSize', [8.5 11]);

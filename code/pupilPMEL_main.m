@@ -68,8 +68,11 @@ end
 
 %% Plot the average pupil responses
 pupilPMEL_plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir )
-%pupilPMEL_plotTPUPComponentCRF( twoComponentFitToData, dropboxAnalysisDir )
 
+
+% The FCON modelling is non-functional, as it needs to be updated to work
+% with the new TPUP parameterization. There is little urgency to do so, as
+% this was not pursued for the MaxMel fMRI paper.
 
 
 % %% Fit FCON model to individual events
