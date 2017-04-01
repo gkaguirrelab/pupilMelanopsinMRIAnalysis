@@ -13,6 +13,7 @@ p.addParameter('markerSize',3,@isnumeric);
 p.addParameter('errorColor',[0.5 0.5 0.5],@isnumeric);
 p.addParameter('lineWidth',0.5,@isnumeric);
 p.addParameter('plotTitle','title here',@ischar);
+p.addParameter('yLabel','% BOLD change',@ischar);
 p.addParameter('xLabel','contrast',@ischar);
 p.addParameter('xTickLabels',cellstr(num2str(xValues')),@iscell);
 p.addParameter('ylim',[-0.5 1],@isnumeric);
@@ -22,14 +23,21 @@ p.addParameter('yAxisAspect',1,@isnumeric);
 p.addParameter('dataOnly',false,@islogical);
 p.addParameter('plotSymbol','o',@ischar);
 p.addParameter('secondAxis',false,@islogical);
+p.addParameter('yDir','normal',@ischar);
 
 p.parse(plotHandle, xValues, meanResponse, errorResponse, varargin{:});
+
+
 
 % Create an empty figure if a handle was not supplied
 if isempty(plotHandle)
     figure();
     plotHandle=subplot(1,1,1);
+else
+    axes(plotHandle);
 end
+
+
 
 % Detect and store current hold state
 initialHoldState = ishold;
@@ -46,8 +54,9 @@ ylim(plotHandle,p.Results.ylim);
 xlim(plotHandle,p.Results.xlim);
 title(plotHandle,p.Results.plotTitle,'Interpreter', 'none');
 pbaspect(plotHandle,[p.Results.xAxisAspect p.Results.yAxisAspect 1])
-ylabel(plotHandle,'% BOLD change');
+ylabel(plotHandle,p.Results.yLabel);
 set(plotHandle,'FontSize',8);
+set(plotHandle,'yDir',p.Results.yDir);
 box(plotHandle,'off');
 
 if p.Results.secondAxis

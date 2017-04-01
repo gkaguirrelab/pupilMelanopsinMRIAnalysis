@@ -24,7 +24,7 @@ for ss = 1:nSessionsMerged/2 % loop over subjects
 end
 subjectScaler=subjectScaler ./ mean(subjectScaler);
 
-% Plot the average response across subjects, along with the average fits
+%% Plot the average response across subjects, along with the average fits
 for ee = 1:2
     figHandle = figure;
     set(gcf, 'PaperSize', [8.5 11]);
@@ -116,7 +116,62 @@ for ee = 1:2
     close(figHandle);
 end
 
+%% Plot CRFs of the pupil response model fit components
+contrastLabels={'25','50','100','200','400'};
+paramLabels=twoComponentFitToData{1,1}.paramsFit.paramNameCell;
+paramYLimLower=[0 0 0 -25 -50 -100];
+paramYLimUpper=[300 300 30 0 0 0];
+yDirSettings={'normal','normal','normal','reverse','reverse','reverse'};
+yLabels={'msecs','msecs','seconds','area [%change/secs]','area [%change/secs]','area [%change/secs]'};
 
+figHandle = figure;
+set(gcf, 'PaperSize', [8.5 11]);
+for pp=1:length(paramLabels)
+    subPlotHandles{pp}=subplot(2,3,pp);
+end
+for ee = 1:2
+    experimentName=mergedPacketCellArray{(ee-1)*(nSessionsMerged/2)+1}{1}.metaData.projectName;
+    switch experimentName
+        case 'MaxLMSCRF'
+            lineColorBase=[.25 .25 .25];
+        case 'MaxMelCRF'
+            lineColorBase=[0 0 1];
+    end
+    for mm=1:nStimTypes
+        for ss = 1:nSessionsMerged/2 % loop over subjects
+            thisPacketIndex=(ee-1)*(nSessionsMerged/2)+ss;
+            allParamVals(ss,mm,:)=twoComponentFitToData{thisPacketIndex,mm}.paramsFit.paramMainMatrix;
+            % Adjust the gain parameters by the SubjectScaler
+            allParamVals(ss,mm,4:6)=allParamVals(ss,mm,4:6) ./ subjectScaler(ss);
+        end
+    end
+    
+    meanParamVals=squeeze(mean(allParamVals,1));
+    semParamVals=squeeze(std(allParamVals,1))/sqrt(nSessionsMerged/2);
+    for pp=1:length(paramLabels)
+        plotTitle=[paramLabels{pp} ' subject mean ±SEM'];
+        % plot the response and SEM across subjects
+        pupilPMEL_PlotCRF( subPlotHandles{pp}, 1:5, meanParamVals(:,pp), semParamVals(:,pp), ...
+            'xTickLabels',contrastLabels,...
+            'xlim',[0 6],...
+            'ylim',[paramYLimLower(pp) paramYLimUpper(pp)],...
+            'lineColor',lineColorBase,...
+            'markerColor',lineColorBase,...
+            'errorColor',lineColorBase,...
+            'plotTitle',plotTitle,...
+            'xLabel','contrast [%]',...
+            'yLabel',yLabels{pp},...
+            'yDir',yDirSettings{pp});
+    end % loop over params
+end % loop over experiments
+% Save the plots
+plotFileName=fullfile(dropboxAnalysisDir, 'Figures', ['PupilFitParamCRFs.pdf']);
+pupilPMEL_suptitle(figHandle,['Mean pupil fit params +-SEM (w subject scaler for amplitudes)']);
+set(figHandle,'Renderer','painters');
+print(figHandle, plotFileName, '-dpdf', '-fillpage');
+close(figHandle);
+
+%% Plot evoked responses for each subject / stimulus
 for ee = 1:2 % loop over experiments, LMS and Mel
     figHandle = figure;
     set(gcf, 'PaperSize', [8.5 11]);
@@ -132,8 +187,7 @@ for ee = 1:2 % loop over experiments, LMS and Mel
             case 'MaxMelCRF'
                 lineColorBase=[0 0 1];
         end
-        
-        
+                
         for mm = 1:nStimTypes
             if mm==1
                 dataOnly=false;
