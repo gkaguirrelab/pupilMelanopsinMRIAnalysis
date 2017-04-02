@@ -1,4 +1,4 @@
-function [twoComponentFitToData] = fitTPUPModelToAverageResponse(mergedPacketCellArray, dropboxAnalysisDir)
+function [twoComponentFitToData] = pupilPMEL_fitTPUPModelToAverageResponse(mergedPacketCellArray, dropboxAnalysisDir)
 
 %% GET THE AVERAGE PACKETS
 normFlag=3; % zero center the initial period, % change units

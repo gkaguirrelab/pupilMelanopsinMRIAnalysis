@@ -17,9 +17,9 @@ dropboxAnalysisDir = ...
 
 % Define cache behavior.
 
-packetCacheBehavior='load';
+packetCacheBehavior='make';
 packetCacheTag='maxMelLSM_CRF_Pupil';
-packetCacheHash='82a4db868b14431c9c4cc65795a2c58d';
+packetCacheHash='a559557ab2a49dab23cab0f498e7aa28';
 
 fitTPUPCacheBehavior='load';
 fitTPUPCacheTag='TPUPModelFits';
@@ -48,7 +48,7 @@ end
 %% Fit TPUP model to avg packets
 switch fitTPUPCacheBehavior    
     case 'make'
-        [ twoComponentFitToData ] = fitTPUPModelToAverageResponse(...
+        [ twoComponentFitToData ] = pupilPMEL_fitTPUPModelToAverageResponse(...
             mergedPacketCellArray, ...
             dropboxAnalysisDir);
         % calculate the hex MD5 hash for the twoComponentFitToData
@@ -65,9 +65,14 @@ switch fitTPUPCacheBehavior
         error('Please define a legal packetCacheBehavior');
 end
 
-
 %% Plot the average pupil responses
 pupilPMEL_plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir )
+
+%% Analyze blinks and gaze
+switch analyzeBlinksBehavior
+    case 'make'
+        pupilPMEL_analyzeBlinksAndGaze( mergedPacketCellArray, dropboxAnalysisDir )
+end
 
 
 % The FCON modelling is non-functional, as it needs to be updated to work
