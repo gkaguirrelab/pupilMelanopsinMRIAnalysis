@@ -1,4 +1,4 @@
-function [values timebase metaData] = pupilMelanopsinMRImakeStimStruct(params)
+function [values timebase metaData] = pupilPMEL_makeStimStruct(params)
 % [values timebase metaData] = pupilMelanopsinMRImakeStimStruct(params)
 %
 % Makes a stimulus structure

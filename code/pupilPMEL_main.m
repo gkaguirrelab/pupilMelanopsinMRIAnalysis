@@ -15,16 +15,18 @@ dropboxAnalysisDir = ...
     fullfile('/Users', userName, ...
     '/Dropbox (Aguirre-Brainard Lab)/MELA_analysis/pupilMelanopsinMRIAnalysis');
 
-% Define cache behavior.
+% Define cache and analysis behavior.
 
 packetCacheBehavior='load';
 packetCacheTag='maxMelLSM_CRF_Pupil';
-packetCacheHash='82a4db868b14431c9c4cc65795a2c58d';
+packetCacheHash='f3e507e694a98311485df5adadfc373a';
 
 fitTPUPCacheBehavior='load';
 fitTPUPCacheTag='TPUPModelFits';
 fitTPUPCacheHash='b2bd2f43419d0ef28f985fe91a8f0957';
 
+makePupilPlots='skip';
+analyzeBlinksBehavior='make';
 
 %% Create or load the packetCellArray
 switch packetCacheBehavior
@@ -48,7 +50,7 @@ end
 %% Fit TPUP model to avg packets
 switch fitTPUPCacheBehavior    
     case 'make'
-        [ twoComponentFitToData ] = fitTPUPModelToAverageResponse(...
+        [ twoComponentFitToData ] = pupilPMEL_fitTPUPModelToAverageResponse(...
             mergedPacketCellArray, ...
             dropboxAnalysisDir);
         % calculate the hex MD5 hash for the twoComponentFitToData
@@ -65,9 +67,17 @@ switch fitTPUPCacheBehavior
         error('Please define a legal packetCacheBehavior');
 end
 
-
 %% Plot the average pupil responses
-pupilPMEL_plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir )
+switch makePupilPlots
+    case 'make'
+        pupilPMEL_plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir )
+end
+
+% Analyze blinks and gaze
+switch analyzeBlinksBehavior
+    case 'make'
+        pupilPMEL_analyzeGaze( mergedPacketCellArray, dropboxAnalysisDir )
+end
 
 
 % The FCON modelling is non-functional, as it needs to be updated to work
