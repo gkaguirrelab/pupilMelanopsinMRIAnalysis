@@ -80,17 +80,14 @@ TimeVectorLinear(isnan(TimeVectorLinear)) = interp1(tmpX(~isnan(TimeVectorLinear
 % Resample the timing to 1 msecs sampling
 Data_LiveTrack_PupilDiameter_FineMasterTime = interp1(TimeVectorLinear*params.TRDurSecs*1000, ...
     Data_LiveTrack_PupilDiameter, TimeVectorFine);
-Data_LiveTrack_IsTracked_FineMasterTime = interp1(TimeVectorLinear*params.TRDurSecs*1000, ...
-    Data_LiveTrack_IsTracked, TimeVectorFine, 'nearest'); % Use NN interpolation for the binary tracking state
 Data_LiveTrack_gazeX_FineMasterTime = interp1(TimeVectorLinear*params.TRDurSecs*1000, ...
     Data_LiveTrack_gazeX, TimeVectorFine);
-Data_LiveTrack_gazeX_FineMasterTime = interp1(TimeVectorLinear*params.TRDurSecs*1000, ...
-    Data_LiveTrack_IsTracked, TimeVectorFine, 'nearest'); % Use NN interpolation for the binary tracking state
 Data_LiveTrack_gazeY_FineMasterTime = interp1(TimeVectorLinear*params.TRDurSecs*1000, ...
     Data_LiveTrack_gazeY, TimeVectorFine);
-Data_LiveTrack_gazeY_FineMasterTime = interp1(TimeVectorLinear*params.TRDurSecs*1000, ...
-    Data_LiveTrack_IsTracked, TimeVectorFine, 'nearest'); % Use NN interpolation for the binary tracking state
 
+% Identify when the eye was tracked
+Data_LiveTrack_IsTracked_FineMasterTime = interp1(TimeVectorLinear*params.TRDurSecs*1000, ...
+    Data_LiveTrack_IsTracked, TimeVectorFine, 'nearest'); % Use NN interpolation for the binary tracking state
 
 % Extract the stimulus timing
 keyPressWhich = [];
@@ -172,3 +169,4 @@ X(nHarmonicsToFilter*2+1,:) = ones(1,size(TimeVectorFine, 2)); % create an inter
 % Obtain the low-frequency component
 Data_LiveTrack_PupilDiameter_FineMasterTime_LowFreqComponent = (X'*b)';
 
+end % function
