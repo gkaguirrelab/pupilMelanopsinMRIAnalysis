@@ -15,16 +15,18 @@ dropboxAnalysisDir = ...
     fullfile('/Users', userName, ...
     '/Dropbox (Aguirre-Brainard Lab)/MELA_analysis/pupilMelanopsinMRIAnalysis');
 
-% Define cache behavior.
+% Define cache and analysis behavior.
 
-packetCacheBehavior='make';
+packetCacheBehavior='load';
 packetCacheTag='maxMelLSM_CRF_Pupil';
-packetCacheHash='a559557ab2a49dab23cab0f498e7aa28';
+packetCacheHash='f3e507e694a98311485df5adadfc373a';
 
 fitTPUPCacheBehavior='load';
 fitTPUPCacheTag='TPUPModelFits';
 fitTPUPCacheHash='b2bd2f43419d0ef28f985fe91a8f0957';
 
+makePupilPlots='skip';
+analyzeBlinksBehavior='make';
 
 %% Create or load the packetCellArray
 switch packetCacheBehavior
@@ -66,12 +68,15 @@ switch fitTPUPCacheBehavior
 end
 
 %% Plot the average pupil responses
-pupilPMEL_plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir )
+switch makePupilPlots
+    case 'make'
+        pupilPMEL_plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir )
+end
 
-%% Analyze blinks and gaze
+% Analyze blinks and gaze
 switch analyzeBlinksBehavior
     case 'make'
-        pupilPMEL_analyzeBlinksAndGaze( mergedPacketCellArray, dropboxAnalysisDir )
+        pupilPMEL_analyzeGaze( mergedPacketCellArray, dropboxAnalysisDir )
 end
 
 

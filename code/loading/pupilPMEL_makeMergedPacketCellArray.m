@@ -73,12 +73,13 @@ for ss = 1:length(sessDirs)
         % new line here
         calibrationFileTemp  = cellstr(ls(fullfile(params.sessionDir, 'EyeTrackingFiles/ScaleCalibration', '*.mat')));
         params.calibrationFile = calibrationFileTemp{1,1};
-        [params.respValues params.respTimeBase params.gazeX params.gazeY params.lowFreqComponentValues] = pupilPMEL_loadPupilDataForPackets(params);
+        [params.respValues params.respTimeBase params.gazeX params.gazeY params.blinks params.lowFreqComponentValues] = pupilPMEL_loadPupilDataForPackets(params);
         [params.stimValues params.stimTimeBase params.stimMetaData] = pupilPMEL_makeStimStruct(params);
         packets{ss, ii} = makePupilPacket(params);
         packets{ss, ii}.response.metaData.lowFreqComponent=params.lowFreqComponentValues;
         packets{ss, ii}.response.gazeX=params.gazeX;
         packets{ss, ii}.response.gazeY=params.gazeY;
+        packets{ss, ii}.response.blinks=params.blinks;
     end
     fprintf('\n');
 end

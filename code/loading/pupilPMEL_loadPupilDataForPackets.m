@@ -1,4 +1,4 @@
-function [Data_LiveTrack_PupilDiameter_FineMasterTime, TimeVectorFine, Data_LiveTrack_gazeX_FineMasterTime, Data_LiveTrack_gazeY_FineMasterTime, Data_LiveTrack_PupilDiameter_FineMasterTime_LowFreqComponent] = pupilPMEL_loadPupilDataForPackets(params)
+function [Data_LiveTrack_PupilDiameter_FineMasterTime, TimeVectorFine, Data_LiveTrack_gazeX_FineMasterTime, Data_LiveTrack_gazeY_FineMasterTime, Data_LiveTrack_blinks_FineMasterTime, Data_LiveTrack_PupilDiameter_FineMasterTime_LowFreqComponent] = pupilPMEL_loadPupilDataForPackets(params)
 % values = loadPupilDataForPackets(input_dir, stimulus, params)
 
 %% STIMULUS VALUES
@@ -137,6 +137,10 @@ Data_LiveTrack_BlinkIdx = unique(Data_LiveTrack_BlinkIdx);
 Data_LiveTrack_PupilDiameter_FineMasterTime(Data_LiveTrack_BlinkIdx) = NaN;
 Data_LiveTrack_gazeX_FineMasterTime(Data_LiveTrack_BlinkIdx) = NaN;
 Data_LiveTrack_gazeY_FineMasterTime(Data_LiveTrack_BlinkIdx) = NaN;
+
+% Createa a vector to report back the time of the blinks
+Data_LiveTrack_blinks_FineMasterTime=Data_LiveTrack_PupilDiameter_FineMasterTime*0;
+Data_LiveTrack_blinks_FineMasterTime(Data_LiveTrack_BlinkIdx)=1;
 
 % Interpolate the elements
 Data_LiveTrack_PupilDiameter_FineMasterTime(isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)) = interp1(TimeVectorFine(~isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)), Data_LiveTrack_PupilDiameter_FineMasterTime(~isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)), TimeVectorFine(isnan(Data_LiveTrack_PupilDiameter_FineMasterTime)));
