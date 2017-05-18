@@ -1,4 +1,4 @@
-function [ ] = pupilPMEL_plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, dropboxAnalysisDir )
+function [ ] = pupilPMEL_plotAveragePupilResponses( mergedPacketCellArray, twoComponentFitToData, analysisDir)
 % Create plots of average evoked pupil responses within and across subjects
 
 %% GET THE AVERAGE PACKETS
@@ -109,7 +109,7 @@ for ee = 1:2
         hold off
     end
     % Save the plots
-    plotFileName=fullfile(dropboxAnalysisDir, 'Figures', [experimentName '_PupilAcrossSubjectResponses.pdf']);
+    plotFileName=fullfile(analysisDir, 'figures', [experimentName '_PupilAcrossSubjectResponses.pdf']);
     pupilPMEL_suptitle(figHandle,['Mean subject pupil responses +-SEM (w subject scaler)']);
     set(figHandle,'Renderer','painters');
     print(figHandle, plotFileName, '-dpdf', '-fillpage');
@@ -165,7 +165,7 @@ for ee = 1:2
     end % loop over params
 end % loop over experiments
 % Save the plots
-plotFileName=fullfile(dropboxAnalysisDir, 'Figures', ['PupilFitParamCRFs.pdf']);
+plotFileName=fullfile(analysisDir, 'figures', ['PupilFitParamCRFs.pdf']);
 pupilPMEL_suptitle(figHandle,['Mean pupil fit params +-SEM (w subject scaler for amplitudes)']);
 set(figHandle,'Renderer','painters');
 print(figHandle, plotFileName, '-dpdf', '-fillpage');
@@ -249,7 +249,7 @@ for ee = 1:2 % loop over experiments, LMS and Mel
     end % loop over subjects
     
     % Save the plots
-    plotFileName=fullfile(dropboxAnalysisDir, 'Figures', [experimentName '_PupilTrialMeanResponses.pdf']);
+    plotFileName=fullfile(analysisDir, 'figures', [experimentName '_PupilTrialMeanResponses.pdf']);
     pupilPMEL_suptitle(figHandle,[experimentName ' - Pupil responses']);
     set(figHandle,'Renderer','painters');
     print(figHandle, plotFileName, '-dpdf', '-fillpage');

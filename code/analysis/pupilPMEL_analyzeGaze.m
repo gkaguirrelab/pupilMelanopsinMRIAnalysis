@@ -1,5 +1,5 @@
-function [ avgPackets ] = pupilPMEL_analyzeGaze( mergedPacketCellArray, dropboxAnalysisDir)
-% function [ avgPackets ] = pupilPMEL_analyzeGaze( mergedPacketCellArray, dropboxAnalysisDir)
+function [ avgPackets ] = pupilPMEL_analyzeGaze( mergedPacketCellArray, analysisDir)
+% function [ avgPackets ] = pupilPMEL_analyzeGaze( mergedPacketCellArray, analysisDir)
 %
 %  Analysis of the horizontal (x) position of the eye during presentation
 %  of the stimulus and during the ISI.
@@ -111,7 +111,7 @@ for ee = 1:length(experimentNames)
 end % loop over experiments
 hold off
 % Save the plots
-plotFileName=fullfile(dropboxAnalysisDir, 'Figures', ['GazeEffect.pdf']);
+plotFileName=fullfile(analysisDir, 'figures', ['GazeEffect.pdf']);
 pupilPMEL_suptitle(figHandle,['Gaze X position during ISI vs. stimulus']);
 set(figHandle,'Renderer','painters');
 print(figHandle, plotFileName, '-dpdf', '-fillpage');

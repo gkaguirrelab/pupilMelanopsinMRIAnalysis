@@ -62,28 +62,11 @@ end
 %% Plot the average pupil responses
 switch makePupilPlots
     case 'make'
-        pupilPMEL_plotAveragePupilResponses(mergedPacketCellArray, twoComponentFitToData, ppsPupilPacketsDir)
+        pupilPMEL_plotAveragePupilResponses(mergedPacketCellArray, twoComponentFitToData, analysisDir)
 end
 
 % Analyze blinks and gaze
 switch analyzeBlinksBehavior
     case 'make'
-        pupilPMEL_analyzeGaze(mergedPacketCellArray, ppsPupilPacketsDir)
+        pupilPMEL_analyzeGaze(mergedPacketCellArray, analysisDir)
 end
-
-
-% The FCON modelling is non-functional, as it needs to be updated to work
-% with the new TPUP parameterization. There is little urgency to do so, as
-% this was not pursued for the MaxMel fMRI paper.
-
-
-% %% Fit FCON model to individual events
-% [myResultsVariable] = ...
-%     fitFCONModelToIndividualResponses(mergedPacketCellArray, ...
-%     twoComponentFitToData, ...
-%     ppsPupilPacketsDir);
-%
-% % plot FCON results
-% plotFCONResults(mergedPacketCellArray, ppsPupilPacketsDir, myResultsVariable);
-%
-
