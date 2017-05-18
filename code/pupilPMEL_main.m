@@ -1,4 +1,4 @@
-function pupilPMEL_main(ppsRawDataDir, ppsPupilPacketsDir)
+function pupilPMEL_main(ppsRawDataDir, ppsPupilPacketsDir, analysisDir)
 %
 % Program to run data analysis on pupil data collected within the
 % `MelanopsinMR` project.
