@@ -109,7 +109,13 @@ for ee = 1:2
         hold off
     end
     % Save the plots
-    plotFileName=fullfile(analysisDir, 'figures', [experimentName '_PupilAcrossSubjectResponses.pdf']);
+    if strcmp([experimentName '_PupilAcrossSubjectResponses'],'MaxMelCRF_PupilAcrossSubjectResponses')
+        plotFileName=fullfile(analysisDir, 'figures', 'Figure4b.pdf');
+    elseif strcmp([experimentName '_PupilAcrossSubjectResponses'],'MaxLMSCRF_PupilAcrossSubjectResponses')
+        plotFileName=fullfile(analysisDir, 'figures', 'Figure4a.pdf');
+    else
+        plotFileName=fullfile(analysisDir, 'figures', [experimentName '_PupilAcrossSubjectResponses.pdf']);
+    end
     pupilPMEL_suptitle(figHandle,['Mean subject pupil responses +-SEM (w subject scaler)']);
     set(figHandle,'Renderer','painters');
     print(figHandle, plotFileName, '-dpdf', '-fillpage');
@@ -165,7 +171,7 @@ for ee = 1:2
     end % loop over params
 end % loop over experiments
 % Save the plots
-plotFileName=fullfile(analysisDir, 'figures', ['PupilFitParamCRFs.pdf']);
+plotFileName=fullfile(analysisDir, 'figures', 'Figure4c_FigureS10.pdf'); %PupilFitParamCRFs
 pupilPMEL_suptitle(figHandle,['Mean pupil fit params +-SEM (w subject scaler for amplitudes)']);
 set(figHandle,'Renderer','painters');
 print(figHandle, plotFileName, '-dpdf', '-fillpage');
@@ -249,7 +255,13 @@ for ee = 1:2 % loop over experiments, LMS and Mel
     end % loop over subjects
     
     % Save the plots
-    plotFileName=fullfile(analysisDir, 'figures', [experimentName '_PupilTrialMeanResponses.pdf']);
+    if strcmp ([experimentName '_PupilTrialMeanResponses'],'MaxLMSCRF_PupilTrialMeanResponses')
+        plotFileName=fullfile(analysisDir, 'figures', 'FigureS8a.pdf');
+    elseif strcmp ([experimentName '_PupilTrialMeanResponses'],'MaxMelCRF_PupilTrialMeanResponses')
+        plotFileName=fullfile(analysisDir, 'figures', 'FigureS8b.pdf');
+    else
+        plotFileName=fullfile(analysisDir, 'figures', [experimentName '_PupilTrialMeanResponses.pdf']);
+    end
     pupilPMEL_suptitle(figHandle,[experimentName ' - Pupil responses']);
     set(figHandle,'Renderer','painters');
     print(figHandle, plotFileName, '-dpdf', '-fillpage');

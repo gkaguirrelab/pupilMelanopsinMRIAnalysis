@@ -1,4 +1,7 @@
 function pupilPMEL_main(ppsRawDataDir, ppsPupilPacketsDir, analysisDir)
+
+fprintf('> Running %s\n', mfilename);
+
 %
 % Program to run data analysis on pupil data collected within the
 % `MelanopsinMR` project.
@@ -17,7 +20,7 @@ fitTPUPCacheBehavior='load';
 fitTPUPCacheTag='TPUPModelFits';
 fitTPUPCacheHash='b2bd2f43419d0ef28f985fe91a8f0957';
 
-makePupilPlots='skip';
+makePupilPlots='make';
 analyzeBlinksBehavior='make';
 
 %% Create or load the packetCellArray
