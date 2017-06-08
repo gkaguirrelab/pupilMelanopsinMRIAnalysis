@@ -10,6 +10,16 @@ fprintf('> Running %s\n', mfilename);
 close all; clc;
 warning on;
 
+% Define output folders for figures and tables
+outFigureDir = fullfile(analysisDir, 'figures');
+if ~isdir(outFigureDir)
+    mkdir(outFigureDir);
+end
+outTableDir = fullfile(analysisDir, 'tables');
+if ~isdir(outTableDir)
+    mkdir(outTableDir);
+end
+
 % Define cache and analysis behavior.
 
 packetCacheBehavior='load';
