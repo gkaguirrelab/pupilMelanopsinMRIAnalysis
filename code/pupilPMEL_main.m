@@ -30,6 +30,10 @@ fitTPUPCacheBehavior='load';
 fitTPUPCacheTag='TPUPModelFits';
 fitTPUPCacheHash='b2bd2f43419d0ef28f985fe91a8f0957';
 
+refitLockedTPUPCacheBehavior='load';
+refitLockedTPUPCacheTag='refitTPUPLockedTimeFits';
+refitLockedTPUPCacheHash='e4e6677382753e3ae1d7c628a7ebad4b';
+
 makePupilPlots='make';
 analyzeBlinksBehavior='make';
 
@@ -69,13 +73,34 @@ switch fitTPUPCacheBehavior
         fitTPUPCacheFileName=fullfile(ppsPupilPacketsDir, 'analysisCache', [fitTPUPCacheTag '_' fitTPUPCacheHash '.mat']);
         load(fitTPUPCacheFileName);        
     otherwise        
-        error('Please define a legal packetCacheBehavior');
+        error('Please define a legal fitTPUPCacheBehavior');
+end
+
+%% Fit TPUP model to avg packets with pinned time parameters
+switch refitLockedTPUPCacheBehavior    
+    case 'make'
+        [ lockedTimeTPUPFitToData ] = pupilPMEL_refitLockedTPUPToAverageResponse(...
+            mergedPacketCellArray, ...
+            ppsPupilPacketsDir, ...
+            twoComponentFitToData);
+        % calculate the hex MD5 hash for the twoComponentFitToData
+        refitLockedTPUPCacheHash = DataHash(lockedTimeTPUPFitToData);        
+        % Set path to the packetCache and save it using the MD5 hash name
+        refitLockedTPUPCacheFileName=fullfile(ppsPupilPacketsDir, 'analysisCache', [refitLockedTPUPCacheTag '_' refitLockedTPUPCacheHash '.mat']);
+        save(refitLockedTPUPCacheFileName,'lockedTimeTPUPFitToData','-v7.3');
+        fprintf(['Saved the ' refitLockedTPUPCacheTag ' with hash ID ' refitLockedTPUPCacheHash '\n']);        
+    case 'load'  % load a cached refit TPUP with locked temporal components        
+        fprintf(['>> Loading cached ' refitLockedTPUPCacheTag ' \n']);
+        refitLockedTPUPCacheFileName=fullfile(ppsPupilPacketsDir, 'analysisCache', [refitLockedTPUPCacheTag '_' refitLockedTPUPCacheHash '.mat']);
+        load(refitLockedTPUPCacheFileName);        
+    otherwise        
+        error('Please define a legal refitLockedTPUPCacheBehavior');
 end
 
 %% Plot the average pupil responses
 switch makePupilPlots
     case 'make'
-        pupilPMEL_plotAveragePupilResponses(mergedPacketCellArray, twoComponentFitToData, analysisDir)
+        pupilPMEL_plotAveragePupilResponses(mergedPacketCellArray, twoComponentFitToData, lockedTimeTPUPFitToData, analysisDir)
 end
 
 % Analyze blinks and gaze
